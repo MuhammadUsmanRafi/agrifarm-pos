@@ -23,7 +23,6 @@ class MainInterface:
         self.label = Label(self.window, image=self.background_image)
         self.label.place(x=0, y=0)
 
-        # Calculate the center position for the login button
         button_width = 200
         button_height = 40
         x_position = (self.window.winfo_screenwidth() - button_width) / 2
