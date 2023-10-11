@@ -5,6 +5,7 @@ from PIL import Image, ImageTk
 import DayTransactionModuleInterface
 import MenuInterface
 import NewSalesModuleInterface
+import ManageInvoiceModuleInterface
 
 
 class SalesInterface:
@@ -85,7 +86,7 @@ class SalesInterface:
         DayTransactionModuleInterface.DayTransactionModuleInterface(self.window)
 
     def invoice_modules_function(self):
-        pass
+        ManageInvoiceModuleInterface.ManageInvoiceModuleInterface(self.window)
 
     def menu_interface(self):
         MenuInterface.MenuInterface(self.window)

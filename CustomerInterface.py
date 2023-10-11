@@ -3,6 +3,7 @@ from tkinter import *
 from PIL import Image, ImageTk
 
 import MenuInterface
+import ViewCustomerModuleInterface
 
 
 class CustomerInterface:
@@ -12,7 +13,6 @@ class CustomerInterface:
         self.window.geometry(f"{window.winfo_screenwidth()}x{window.winfo_screenheight()}")
         self.window.iconbitmap("icon.ico")
 
-        # Set background image for the login window
         background_image_path = "assets/customer.png"
         self.background_image = Image.open(background_image_path)
         self.background_image = self.background_image.resize(
@@ -22,9 +22,11 @@ class CustomerInterface:
         self.label = Label(self.window, image=self.background_image)
         self.label.place(x=0, y=0)
 
-        self.back_to_home_button = Button(self.window, text="Back", command=self.menu_interface,
-                                          font=("Arial", 12), bg="#487307", fg="white", width=15)
+        self.back_to_home_button = Button(self.window, text="Back", command=self.menu_interface, font=("Arial", 12),
+                                          bg="#487307", fg="white", width=15)
         self.back_to_home_button.place(x=10, y=10)  # Adjust the position
+
+        self.modules_button = []
 
         self.customer_frame = Frame(self.window, bg="#968802", highlightbackground="#968802", highlightthickness=0)
         self.customer_frame.place(x=self.window.winfo_screenwidth() / 4 + 55,
@@ -41,9 +43,9 @@ class CustomerInterface:
         # Create and pack buttons with adjusted width and height
         for label in button_labels:
             button = Button(self.upper_button, text=label, font=("Arial", 12, "bold"), bg="#487307", fg="white",
-                            width=25,
-                            height=3)
-            button.pack(side=LEFT, padx=10)  # Adjust width, height, and padding
+                            width=25, height=3)
+            button.pack(side=LEFT, padx=10)
+            self.modules_button.append(button)
 
         self.upper_button.pack()
 
@@ -57,9 +59,9 @@ class CustomerInterface:
         # Create and pack buttons with adjusted width and height
         for label in button_labels:
             button = Button(self.middle_button, text=label, font=("Arial", 12, "bold"), bg="#487307", fg="white",
-                            width=25,
-                            height=3)
-            button.pack(side=LEFT, padx=10)  # Adjust width, height, and padding
+                            width=25, height=3)
+            button.pack(side=LEFT, padx=10)
+            self.modules_button.append(button)
 
         self.middle_button.pack()
 
@@ -75,17 +77,35 @@ class CustomerInterface:
             button = Button(self.lower_button, text=label, font=("Arial", 12, "bold"), bg="#487307", fg="white",
                             width=25, height=3)
             button.pack(side=LEFT, padx=10)
+            self.modules_button.append(button)
         self.lower_button.pack()
 
-        self.end_button = Frame(self.customer_frame, bg="#968802", highlightbackground="#968802",
-                                highlightthickness=0)
+        self.end_button = Frame(self.customer_frame, bg="#968802", highlightbackground="#968802", highlightthickness=0)
         self.end_button.configure(padx=20, pady=20, borderwidth=2, relief=SOLID)
         button_labels = ["Delete Customer"]
         for label in button_labels:
-            button = Button(self.end_button, text=label, font=("Arial", 12, "bold"), bg="#487307", fg="white",
-                            width=25, height=3)
+            button = Button(self.end_button, text=label, font=("Arial", 12, "bold"), bg="#487307", fg="white", width=25,
+                            height=3)
             button.pack(side=LEFT, padx=10)
+            self.modules_button.append(button)
         self.end_button.pack()
+
+        self.modules_button[0].config(command=self.recent_customer)
+        self.modules_button[1].config(command=self.favourite_customer)
+        self.modules_button[2].config(command=self.edit_customer)
+        self.modules_button[3].config(command=self.delete_customer)
+
+    def recent_customer(self):
+        ViewCustomerModuleInterface.ViewCustomerModulesInterface(self.window, 0)
+
+    def favourite_customer(self):
+        ViewCustomerModuleInterface.ViewCustomerModulesInterface(self.window, 1)
+
+    def edit_customer(self):
+        ViewCustomerModuleInterface.ViewCustomerModulesInterface(self.window, 2)
+
+    def delete_customer(self):
+        ViewCustomerModuleInterface.ViewCustomerModulesInterface(self.window, 3)
 
     def menu_interface(self):
         MenuInterface.MenuInterface(self.window)
