@@ -2,6 +2,7 @@ from tkinter import *
 
 from PIL import Image, ImageTk
 
+import DayTransactionModuleInterface
 import MenuInterface
 import NewSalesModuleInterface
 
@@ -39,7 +40,6 @@ class SalesInterface:
 
         button_labels = ["New Sales"]
 
-        # Create and pack buttons with adjusted width and height
         for label in button_labels:
             button = Button(self.upper_button, text=label, font=("Arial", 12, "bold"), bg="#487307", fg="white",
                             width=25, height=3)
@@ -82,7 +82,7 @@ class SalesInterface:
         NewSalesModuleInterface.NewSalesModuleInterface(self.window)
 
     def day_transaction_modules_function(self):
-        pass
+        DayTransactionModuleInterface.DayTransactionModuleInterface(self.window)
 
     def invoice_modules_function(self):
         pass
