@@ -6,7 +6,7 @@ import InventoryManagementInterface
 
 
 class UpdateInventoryModuleInterface:
-    def __init__(self, window, machinery_name, image_path, count, rate):
+    def __init__(self, window, machinery_name, company, image_path, count, rate):
         self.window = window
         self.window.title(machinery_name)
         self.window.geometry(f"{int(window.winfo_screenwidth() / 1.5)}x{int(window.winfo_screenheight() / 1.5)}")
@@ -21,8 +21,8 @@ class UpdateInventoryModuleInterface:
         self.label = Label(self.window, image=self.background_image)
         self.label.place(x=0, y=0)
 
-        self.back_to_home_button = Button(self.window, text="Back", command=self.menu_interface,
-                                          font=("Arial", 12), bg="#487307", fg="white", width=15)
+        self.back_to_home_button = Button(self.window, text="Back", command=self.menu_interface, font=("Arial", 12),
+                                          bg="#487307", fg="white", width=15)
         self.back_to_home_button.place(x=10, y=10)
 
         self.add_outer_frame = Frame(self.window, bg="#968802", highlightbackground="#968802", highlightthickness=0)
@@ -75,8 +75,7 @@ class UpdateInventoryModuleInterface:
 
         # Add Product Button
         self.add_button = Button(self.add_product_frame, text=f"Add {machinery_name}", font=("Arial", 12, "bold"),
-                                 bg="#487307",
-                                 fg="white", width=25, height=2, command=self.add_product)
+                                 bg="#487307", fg="white", width=25, height=2, command=self.add_product)
         self.add_button.grid(row=4, column=1, columnspan=2, pady=(0, 20))
 
     def menu_interface(self):

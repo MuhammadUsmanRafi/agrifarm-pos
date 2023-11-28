@@ -1,11 +1,12 @@
+from io import BytesIO
 from tkinter import *
 from tkinter import messagebox
-from Database import product
 
 from PIL import Image, ImageTk
 
 import InventoryManagementInterface
 import UpdateInventoryModuleInterface
+from Database import product
 
 
 class ViewInventoryModulesInterface:
@@ -25,8 +26,8 @@ class ViewInventoryModulesInterface:
         self.label = Label(self.window, image=self.background_image)
         self.label.place(x=0, y=0)
 
-        self.back_to_home_button = Button(self.window, text="Back", command=self.menu_interface,
-                                          font=("Arial", 12), bg="#487307", fg="white", width=15)
+        self.back_to_home_button = Button(self.window, text="Back", command=self.menu_interface, font=("Arial", 12),
+                                          bg="#487307", fg="white", width=15)
         self.back_to_home_button.place(x=10, y=10)
 
         self.title_label = Label(self.window, text=f"{self.labels[num]}", font=("Arial", 40, "bold"),
@@ -35,44 +36,43 @@ class ViewInventoryModulesInterface:
 
         self.frames = []
 
-        agricultural_machinery = [
-            {"name": "Tractor", "image_path": "assets/products/Tractor.png", "count": 10, "rate": 1000},
-            {"name": "Plow", "image_path": "assets/products/Plow.png", "count": 15, "rate": 500},
-            {"name": "Tiller", "image_path": "assets/products/Tiller.png", "count": 5, "rate": 1200},
-            {"name": "Seeder", "image_path": "assets/products/Seeder.png", "count": 20, "rate": 800},
-            {"name": "Harvester", "image_path": "assets/products/Harvester.png", "count": 8, "rate": 2500}
-        ]
+        products_data = product.find()
 
-        for i in range(5):
+        # Iterate through the retrieved documents and create frames dynamically
+        for i, product_data in enumerate(products_data):
             frame = Frame(self.window, bg="#487307", highlightbackground="#487307", highlightthickness=0)
             frame.place(x=i * (self.window.winfo_screenwidth() / 5) + 22, y=self.window.winfo_screenheight() / 5 + 40)
 
-            machinery_name = agricultural_machinery[i]["name"]
-            image_path = agricultural_machinery[i]["image_path"]
-            count = agricultural_machinery[i]["count"]
-            rate = agricultural_machinery[i]["rate"]
+            # Extract product information from the document
+            product_name = product_data["product_name"]
+            company = product_data["product_company"]
+            image_data = product_data["product_image"]
+            count = product_data["product_count"]
+            rate = product_data["product_rate"]
 
-            label = Label(frame, text=f"{machinery_name}", font=("Arial", 18, "bold"), background="#487307",
+            image = Image.open(BytesIO(image_data))
+            image = self.crop_center(image, 180, 180)
+            image = ImageTk.PhotoImage(image)
+
+            # Display product information in the frame
+            label = Label(frame, text=f"{product_name}", font=("Arial", 18, "bold"), background="#487307",
                           foreground="white")
             label.pack(side=TOP, pady=10)
 
-            machinery_image = Image.open(image_path)
-            machinery_image = self.crop_center(machinery_image, 180, 180)
-            machinery_image = ImageTk.PhotoImage(machinery_image)
-
-            image_label = Label(frame, image=machinery_image)
-            image_label.image = machinery_image
+            image_label = Label(frame, image=image)
+            image_label.image = image
             image_label.pack()
 
-            description_label = Label(frame,
-                                      text=f"Count: {count}\nRate: {rate}K",
+            description_label = Label(frame, text=f"Company: {company}\n,Count: {count}\nRate: {rate}K",
                                       font=("Arial", 15), background="#487307", foreground="white")
             description_label.pack()
 
             # Create a lambda function to pass additional arguments to button_click
             button = Button(frame, text="View", font=("Arial", 12),
-                            command=lambda name=machinery_name, path=image_path, c=count, r=rate:
-                            self.button_click(name, path, c, r, num),  # Pass num as an argument
+                            command=lambda name=product_name, path=image, c=count, r=rate: self.button_click(name,
+                                                                                                             company,
+                                                                                                             path, c, r,
+                                                                                                             num),
                             width=20, background="#968802", foreground="white")
             button.pack(side=TOP, padx=10, pady=5)
 
@@ -96,12 +96,15 @@ class ViewInventoryModulesInterface:
     def menu_interface(self):
         InventoryManagementInterface.InventoryManagementInterface(self.window)
 
-    def button_click(self, machinery_name, image_path, count, rate, num):
+    def button_click(self, product_name, company, image, count, rate, num):
         if num == 2 or num == 0:
-            UpdateInventoryModuleInterface.UpdateInventoryModuleInterface(self.window, machinery_name, image_path,
+            UpdateInventoryModuleInterface.UpdateInventoryModuleInterface(self.window, product_name, company, image,
                                                                           count, rate)
         if num == 3:
-            messagebox.askyesno("Confirm Remove", f"Do you want to remove {machinery_name}?")
+            user_response = messagebox.askyesno("Confirm Remove", f"Do you want to remove {product_name}?")
+            if user_response:
+                product.delete_one({"product_name": product_name, "product_company": company})
+                ViewInventoryModulesInterface(self.window, 0)
 
     @staticmethod
     def crop_center(pil_image, width, height):
