@@ -52,30 +52,37 @@ class AddInventoryModulesInterface:
         self.product_name_entry.grid(row=1, column=1, pady=(5, 5))
         self.product_name_entry.focus_set()
 
+        self.product_company_name_label = Label(self.add_product_frame, text="Product Company:", font=("Arial", 12),
+                                                bg="#968802", fg="white")
+        self.product_company_name_label.grid(row=2, column=0, sticky="e", pady=(5, 5))
+
+        self.product_company_name_entry = Entry(self.add_product_frame, font=("Arial", 12))
+        self.product_company_name_entry.grid(row=2, column=1, pady=(5, 5))
+
         self.product_count_label = Label(self.add_product_frame, text="Product Count:", font=("Arial", 12),
                                          bg="#968802", fg="white")
-        self.product_count_label.grid(row=2, column=0, sticky="e", pady=(5, 5))
+        self.product_count_label.grid(row=3, column=0, sticky="e", pady=(5, 5))
 
         self.product_count_entry = Entry(self.add_product_frame, font=("Arial", 12))
-        self.product_count_entry.grid(row=2, column=1, pady=(5, 5))
+        self.product_count_entry.grid(row=3, column=1, pady=(5, 5))
 
         self.product_rate_label = Label(self.add_product_frame, text="Product Rate (K):", font=("Arial", 12),
                                         bg="#968802", fg="white")
-        self.product_rate_label.grid(row=3, column=0, sticky="e", pady=(5, 5))
+        self.product_rate_label.grid(row=4, column=0, sticky="e", pady=(5, 5))
 
         self.product_rate_entry = Entry(self.add_product_frame, font=("Arial", 12))
-        self.product_rate_entry.grid(row=3, column=1, pady=(5, 5))
+        self.product_rate_entry.grid(row=4, column=1, pady=(5, 5))
 
         self.upload_image_button = Button(self.add_product_frame, text="Upload Image", font=("Arial", 12), bg="#487307",
                                           fg="white", width=15, command=self.upload_image)
-        self.upload_image_button.grid(row=4, column=0, columnspan=2, pady=(0, 10))
+        self.upload_image_button.grid(row=5, column=0, columnspan=2, pady=(0, 10))
 
         self.image_path_label = Label(self.add_product_frame, text="", font=("Arial", 10), bg="#968802", fg="white")
-        self.image_path_label.grid(row=5, column=0, columnspan=2, pady=(0, 10))
+        self.image_path_label.grid(row=6, column=0, columnspan=2, pady=(0, 10))
 
         self.add_button = Button(self.add_product_frame, text="Add Product", font=("Arial", 12, "bold"), bg="#487307",
                                  fg="white", width=25, height=2, command=self.add_product)
-        self.add_button.grid(row=6, column=0, columnspan=2, pady=(0, 20))
+        self.add_button.grid(row=7, column=0, columnspan=2, pady=(0, 20))
 
     def upload_image(self):
         file_path = filedialog.askopenfilename(title="Select an Image",
@@ -84,6 +91,7 @@ class AddInventoryModulesInterface:
 
     def add_product(self):
         product_name = self.product_name_entry.get()
+        product_company_name = self.product_company_name_entry.get()
         product_count = self.product_count_entry.get()
         product_rate = self.product_rate_entry.get()
         image_path = self.image_path_label.cget("text")
@@ -100,8 +108,8 @@ class AddInventoryModulesInterface:
         with open(image_path, "rb") as image_file:
             binary_data = Binary(image_file.read())
 
-        product_data = {"product_name": product_name, "product_count": product_count, "product_rate": product_rate,
-                        "product_image": binary_data}
+        product_data = {"product_name": product_name, "product_company": product_company_name,
+                        "product_count": product_count, "product_rate": product_rate, "product_image": binary_data}
 
         # Create a top-level window for confirmation
         confirmation_window = Toplevel(self.window)
@@ -110,6 +118,7 @@ class AddInventoryModulesInterface:
 
         # Display the data in the confirmation window
         data_label = Label(confirmation_window, text=f"Product Name: {product_name}\n"
+                                                     f"Product Company :{product_company_name}\n"
                                                      f"Product Count: {product_count}\n"
                                                      f"Product Rate: {product_rate}\n")
         data_label.pack()
@@ -122,12 +131,14 @@ class AddInventoryModulesInterface:
         image_label.pack()
 
         # Add Yes and No buttons
-        yes_button = Button(confirmation_window, text="Yes",
+        yes_button = Button(confirmation_window, text="Yes", font=("Arial", 12, "bold"), bg="#487307", fg="white",
+                            width=10, height=3, pady=10,
                             command=lambda: self.save_to_database(product_data, confirmation_window))
-        yes_button.pack(side="left", padx=10)
+        yes_button.pack(side="left", padx=20)
 
-        no_button = Button(confirmation_window, text="No", command=confirmation_window.destroy)
-        no_button.pack(side="right", padx=10)
+        no_button = Button(confirmation_window, text="No", font=("Arial", 12, "bold"), bg="#487307", fg="white",
+                           width=10, height=3, pady=10, command=confirmation_window.destroy)
+        no_button.pack(side="right", padx=20)
 
     def save_to_database(self, product_data, confirmation_window):
         self.window.attributes('-topmost', True)
@@ -138,6 +149,7 @@ class AddInventoryModulesInterface:
             messagebox.showinfo("Success", "Data saved into the database.")
 
             self.product_name_entry.delete(0, END)
+            self.product_company_name_entry.delete(0, END)
             self.product_count_entry.delete(0, END)
             self.product_rate_entry.delete(0, END)
             self.image_path_label.config(text="")

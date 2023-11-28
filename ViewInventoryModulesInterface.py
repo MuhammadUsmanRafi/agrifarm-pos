@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import messagebox
+from Database import product
 
 from PIL import Image, ImageTk
 

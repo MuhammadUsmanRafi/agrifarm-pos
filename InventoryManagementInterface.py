@@ -61,8 +61,7 @@ class InventoryManagementInterface:
         # Create and pack buttons with adjusted width and height
         for label in button_labels:
             button = Button(self.lower_button, text=label, font=("Arial", 12, "bold"), bg="#487307", fg="white",
-                            width=25,
-                            height=3)
+                            width=25, height=3)
             button.pack(side=LEFT, padx=10)
             self.modules.append(button)
 
