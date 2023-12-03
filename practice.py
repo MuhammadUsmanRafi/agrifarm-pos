@@ -1,10 +1,5 @@
 import tkinter as tk
 
-
-def on_horizontal_scroll(*args):
-    canvas.xview(*args)
-
-
 root = tk.Tk()
 root.title("Horizontal Scrollbar in Frame")
 

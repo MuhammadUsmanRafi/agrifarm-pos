@@ -10,7 +10,7 @@ class MainInterface:
         self.window = window
         self.window.title("AGRIFARM")
         self.window.attributes('-topmost', True)
-        self.window.state('zoomed')
+        self.window.state('zoomed')  # Maximize the window
         self.window.iconbitmap("icon.ico")
 
         # Set background image for the main window
