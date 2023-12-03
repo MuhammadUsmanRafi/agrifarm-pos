@@ -41,7 +41,7 @@ class ViewInventoryModulesInterface:
         # Iterate through the retrieved documents and create frames dynamically
         for i, product_data in enumerate(products_data):
             frame = Frame(self.window, bg="#487307", highlightbackground="#487307", highlightthickness=0)
-            frame.place(x=i * (self.window.winfo_screenwidth() / 5) + 22, y=self.window.winfo_screenheight() / 5 + 40)
+            frame.place(x=i * (self.window.winfo_screenwidth() / 5) + 22, y=self.window.winfo_screenheight() / 5 + 35)
 
             # Extract product information from the document
             product_name = product_data["product_name"]
@@ -51,7 +51,7 @@ class ViewInventoryModulesInterface:
             rate = product_data["product_rate"]
 
             image = Image.open(BytesIO(image_data))
-            image = self.crop_center(image, 180, 180)
+            image = image.resize((180, 180))
             image = ImageTk.PhotoImage(image)
 
             # Display product information in the frame
@@ -63,8 +63,8 @@ class ViewInventoryModulesInterface:
             image_label.image = image
             image_label.pack()
 
-            description_label = Label(frame, text=f"Company: {company}\n,Count: {count}\nRate: {rate}K",
-                                      font=("Arial", 15), background="#487307", foreground="white")
+            description_label = Label(frame, text=f"Company: {company}\nCount: {count}\nRate: {rate}K",
+                                      font=("Arial", 12), background="#487307", foreground="white", anchor='w')
             description_label.pack()
 
             # Create a lambda function to pass additional arguments to button_click
@@ -105,15 +105,6 @@ class ViewInventoryModulesInterface:
             if user_response:
                 product.delete_one({"product_name": product_name, "product_company": company})
                 ViewInventoryModulesInterface(self.window, 0)
-
-    @staticmethod
-    def crop_center(pil_image, width, height):
-        img_width, img_height = pil_image.size
-        left = (img_width - width) / 2
-        top = (img_height - height) / 2
-        right = (img_width + width) / 2
-        bottom = (img_height + height) / 2
-        return pil_image.crop((left, top, right, bottom))
 
 
 if __name__ == "__main__":

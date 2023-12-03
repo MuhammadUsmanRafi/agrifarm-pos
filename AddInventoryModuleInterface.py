@@ -5,6 +5,7 @@ from PIL import Image, ImageTk
 from bson import Binary
 
 import InventoryManagementInterface
+import ViewInventoryModulesInterface
 from Database import product
 
 
@@ -30,7 +31,7 @@ class AddInventoryModulesInterface:
         self.back_to_home_button.place(x=10, y=10)
 
         self.add_outer_frame = Frame(self.window, bg="#968802", highlightbackground="black", highlightthickness=2)
-        self.add_outer_frame.place(x=self.window.winfo_screenwidth() / 2, y=self.window.winfo_screenheight() / 2,
+        self.add_outer_frame.place(x=self.window.winfo_screenwidth() / 2, y=self.window.winfo_screenheight() / 2 + 11,
                                    anchor="center")
         self.add_outer_frame.configure(padx=20, pady=20, borderwidth=2, relief=SOLID)
 
@@ -114,16 +115,21 @@ class AddInventoryModulesInterface:
         # Create a top-level window for confirmation
         confirmation_window = Toplevel(self.window)
         confirmation_window.title("Confirmation")
-        confirmation_window.geometry("400x400")
+        x = (confirmation_window.winfo_screenwidth() - 500) // 2
+        y = (confirmation_window.winfo_screenheight() - 500) // 2
+
+        confirmation_window.geometry(f"{500}x{500}+{x}+{y}")
 
         # Display the data in the confirmation window
         data_label = Label(confirmation_window, text=f"Product Name: {product_name}\n"
                                                      f"Product Company :{product_company_name}\n"
                                                      f"Product Count: {product_count}\n"
-                                                     f"Product Rate: {product_rate}\n")
+                                                     f"Product Rate: {product_rate}\n", font=("Arial", 12),
+                           bg="#968802", fg="white")
         data_label.pack()
 
         image = Image.open(image_path)
+        image = image.resize((300, 300))
         image = ImageTk.PhotoImage(image)
 
         image_label = Label(confirmation_window, image=image)
@@ -132,12 +138,11 @@ class AddInventoryModulesInterface:
 
         # Add Yes and No buttons
         yes_button = Button(confirmation_window, text="Yes", font=("Arial", 12, "bold"), bg="#487307", fg="white",
-                            width=10, height=3, pady=10,
-                            command=lambda: self.save_to_database(product_data, confirmation_window))
+                            width=10, command=lambda: self.save_to_database(product_data, confirmation_window))
         yes_button.pack(side="left", padx=20)
 
         no_button = Button(confirmation_window, text="No", font=("Arial", 12, "bold"), bg="#487307", fg="white",
-                           width=10, height=3, pady=10, command=confirmation_window.destroy)
+                           width=10, command=confirmation_window.destroy)
         no_button.pack(side="right", padx=20)
 
     def save_to_database(self, product_data, confirmation_window):
@@ -156,6 +161,7 @@ class AddInventoryModulesInterface:
 
         # Close the confirmation window
         confirmation_window.destroy()
+        ViewInventoryModulesInterface.ViewInventoryModulesInterface(self.window, 0)
 
     def menu_interface(self):
         InventoryManagementInterface.InventoryManagementInterface(self.window)
