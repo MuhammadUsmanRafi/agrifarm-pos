@@ -77,11 +77,9 @@ class ViewInventoryModulesInterface:
 
             button_text = "View" if num != 2 else "Update" if num == 2 else "Remove"
             button = Button(frame, text=button_text, font=("Arial", 12),
-                            command=lambda name=product_name, path=image, c=count, r=rate: self.button_click(name,
-                                                                                                             company,
-                                                                                                             path, c, r,
-                                                                                                             num),
-                            width=20, background="#968802", foreground="white")
+                            command=lambda name=product_name, comp=company, path=image_data, c=count,
+                                           r=rate: self.button_click(name, comp, path, c, r, num), width=20,
+                            background="#968802", foreground="white")
             button.pack(side=TOP, padx=10, pady=5)
 
             if num == 2:
@@ -117,7 +115,7 @@ class ViewInventoryModulesInterface:
             user_response = messagebox.askyesno("Confirm Remove", f"Do you want to remove {product_name}?")
             if user_response:
                 product.delete_one({"product_name": product_name, "product_company": company})
-                ViewInventoryModulesInterface(self.window, 0)
+                ViewInventoryModulesInterface(self.window, 3)
 
 
 if __name__ == "__main__":

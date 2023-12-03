@@ -28,9 +28,8 @@ class MainInterface:
         x_position = (self.window.winfo_screenwidth() - button_width) / 2
         y_position = (self.window.winfo_screenheight() - button_height) * 0.8
 
-        login_button = Button(self.window, text="Click here to Login", width=20,
-                              command=self.show_login_interface, background="#487307", foreground="white",
-                              font="Arial 12 bold")
+        login_button = Button(self.window, text="Click here to Login", width=20, command=self.show_login_interface,
+                              background="#487307", foreground="white", font="Arial 12 bold")
         login_button.place(x=x_position, y=y_position)
 
     def show_login_interface(self):
