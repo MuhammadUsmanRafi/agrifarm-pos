@@ -1,8 +1,11 @@
 from tkinter import *
+from tkinter import messagebox
 
 from PIL import Image, ImageTk
 
+import LoginInterface
 import MenuInterface
+from Database import credentials
 
 
 class SettingInterface:
@@ -26,7 +29,8 @@ class SettingInterface:
         self.back_to_home_button.place(x=10, y=10)
 
         self.frame = Frame(self.window, bg="#968802", highlightbackground="#968802", highlightthickness=0)
-        self.frame.place(x=self.window.winfo_screenwidth() / 4 * 3, y=self.window.winfo_screenheight() / 3 * 1.9, anchor="center")
+        self.frame.place(x=self.window.winfo_screenwidth() / 4 * 3, y=self.window.winfo_screenheight() / 3 * 1.9,
+                         anchor="center")
 
         self.frame.configure(padx=20, pady=20, borderwidth=2, relief=SOLID)
 
@@ -62,7 +66,17 @@ class SettingInterface:
         login_button.pack(pady=10)
 
     def change_password(self):
-        pass
+        document = credentials.find_one()
+        if document is not None:
+            if self.old_pass.get() == document["password"]:
+                result = credentials.update_one({"username": "admin"}, {"$set": {"password": f"{self.new_pass.get()}"}})
+
+                if result.modified_count == 1:
+                    response = messagebox.showinfo("Success", "Your password has been changed successfully")
+                    if response == 'ok':
+                        LoginInterface.LoginInterface(self.window)
+            else:
+                messagebox.showinfo("Not found", "Your old password is not correct. Please try again")
 
     def menu_interface(self):
         MenuInterface.MenuInterface(self.window)

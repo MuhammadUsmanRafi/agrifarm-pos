@@ -4,14 +4,20 @@ from tkinter import messagebox
 from PIL import Image, ImageTk
 
 import MenuInterface
+from Database import credentials
 from main import MainInterface
 
 
 class LoginInterface:
     def __init__(self, window):
         self.show_password_var = None
-        self.USERNAME = "admin"
-        self.PASSWORD = "123456789"
+        credentials_document = credentials.find_one()
+        if credentials_document:
+            self.USERNAME = credentials_document["username"]
+            self.PASSWORD = credentials_document["password"]
+        else:
+            self.USERNAME = ""
+            self.PASSWORD = ""
         self.window = window
         self.window.title("Login")
         self.window.geometry(f"{window.winfo_screenwidth()}x{window.winfo_screenheight()}")
@@ -28,8 +34,7 @@ class LoginInterface:
         self.label.place(x=0, y=0)
 
         self.frame = Frame(self.window, bg="#968802", highlightbackground="#968802", highlightthickness=0)
-        self.frame.place(x=self.window.winfo_screenwidth() / 2, y=self.window.winfo_screenheight() / 2,
-                         anchor="center")
+        self.frame.place(x=self.window.winfo_screenwidth() / 2, y=self.window.winfo_screenheight() / 2, anchor="center")
 
         self.frame.configure(padx=20, pady=20, borderwidth=2, relief=SOLID)
 
@@ -62,11 +67,14 @@ class LoginInterface:
         self.pass_entry = Entry(pass_frame, font=("Arial", 12), show="*", bg="white", textvariable=password_var)
         self.pass_entry.pack(fill="x", expand=True)
         self.pass_entry.insert(0, self.PASSWORD)
-        self.pass_entry.focus_set()
+        if self.PASSWORD == "":
+            self.user_entry.focus_set()
+        else:
+            self.pass_entry.focus_set()
         self.show_password_var = BooleanVar()
-        show_password_checkbox = Checkbutton(self.login_frame, text='Show Password', font=("Arial", 12),
-                                             bg="#968802", fg="white", variable=self.show_password_var,
-                                             selectcolor="white", command=self.show_password)
+        show_password_checkbox = Checkbutton(self.login_frame, text='Show Password', font=("Arial", 12), bg="#968802",
+                                             fg="white", variable=self.show_password_var, selectcolor="white",
+                                             command=self.show_password)
         show_password_checkbox.pack(pady=10)
 
         login_button = Button(self.login_frame, text='Login', command=self.perform_login, font=("Arial", 12),
