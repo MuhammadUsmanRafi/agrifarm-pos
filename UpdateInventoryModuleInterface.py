@@ -4,6 +4,7 @@ from tkinter import *
 from tkinter import filedialog, messagebox
 
 from PIL import Image, ImageTk
+from pymongo import errors
 
 import ViewInventoryModulesInterface
 from Database import product
@@ -197,9 +198,14 @@ class UpdateInventoryModuleInterface:
     def save_to_database(self, product_data, confirmation_window):
         self.window.attributes('-topmost', True)
         self.window.state('zoomed')
-        result = product.update_one(
-            {"ProductName": product_data["ProductName"], "ProductCompany": product_data["ProductCompany"]},
-            {"$set": product_data})
+        result = NONE
+        try:
+            result = product.update_one(
+                {"ProductName": product_data["ProductName"], "ProductCompany": product_data["ProductCompany"]},
+                {"$set": product_data})
+            print(f"Matched {result.matched_count} document(s) and modified {result.modified_count} document(s)")
+        except errors.PyMongoError as e:
+            print(f"Error updating document: {e}")
 
         if result.modified_count > 0:
             messagebox.showinfo("Success", "Data updated in the database.")
