@@ -1,3 +1,4 @@
+import base64
 from io import BytesIO
 from tkinter import *
 from tkinter import messagebox
@@ -54,17 +55,21 @@ class ViewInventoryModulesInterface:
             frame = Frame(self.outer_frame, bg="#487307", highlightbackground="#487307", highlightthickness=0)
             frame.grid(row=0, column=i, padx=5, pady=5)
 
-            product_name = product_data["product_name"]
-            company = product_data["product_company"]
-            image_data = product_data["product_image"]
-            count = product_data["product_count"]
-            rate = product_data["product_rate"]
+            product_name = product_data["ProductName"]
+            company = product_data["ProductCompany"]
+            brand = product_data["ProductBrand"]
+            category = product_data["CategoryName"]
+            rate = product_data["ProductPrice"]
+            count = product_data["QuantityInStock"]
+            image_data = product_data["ProductImage"]
+            decoded_image_data = base64.b64decode(image_data)  # Decode base64 string to bytes
 
             label = Label(frame, text=f"{product_name}", font=("Arial", 18, "bold"), background="#487307",
                           foreground="white")
             label.pack(side=TOP, pady=10)
 
-            image = Image.open(BytesIO(image_data))
+            # Use BytesIO to open the image from bytes
+            image = Image.open(BytesIO(decoded_image_data))
             image = image.resize((180, 180))
             image = ImageTk.PhotoImage(image)
             image_label = Label(frame, image=image)
@@ -77,8 +82,10 @@ class ViewInventoryModulesInterface:
 
             button_text = "View" if num != 2 else "Update" if num == 2 else "Remove"
             button = Button(frame, text=button_text, font=("Arial", 12),
-                            command=lambda name=product_name, comp=company, path=image_data, c=count,
-                                           r=rate: self.button_click(name, comp, path, c, r, num), width=20,
+                            command=lambda name=product_name, comp=company, pbrand=brand, pcategory=category,
+                                           path=image_data, c=count, r=rate: self.button_click(name, comp, pbrand,
+                                                                                               pcategory, path, c, r,
+                                                                                               num), width=20,
                             background="#968802", foreground="white")
             button.pack(side=TOP, padx=10, pady=5)
 
@@ -107,14 +114,14 @@ class ViewInventoryModulesInterface:
     def menu_interface(self):
         InventoryManagementInterface.InventoryManagementInterface(self.window)
 
-    def button_click(self, product_name, company, image, count, rate, num):
+    def button_click(self, product_name, company, brand, category, image, count, rate, num):
         if num == 2 or num == 0:
-            UpdateInventoryModuleInterface.UpdateInventoryModuleInterface(self.window, product_name, company, image,
-                                                                          count, rate)
+            UpdateInventoryModuleInterface.UpdateInventoryModuleInterface(self.window, product_name, company, brand,
+                                                                          category, image, count, rate)
         if num == 3:
             user_response = messagebox.askyesno("Confirm Remove", f"Do you want to remove {product_name}?")
             if user_response:
-                product.delete_one({"product_name": product_name, "product_company": company})
+                product.delete_one({"ProductName": product_name, "ProductCompany": company, "ProductBrand": brand})
                 ViewInventoryModulesInterface(self.window, 3)
 
 

@@ -1,17 +1,17 @@
+import base64
 from io import BytesIO
 from tkinter import *
 from tkinter import filedialog, messagebox
 
 from PIL import Image, ImageTk
-from bson import Binary
 
-import InventoryManagementInterface
 import ViewInventoryModulesInterface
 from Database import product
 
 
 class UpdateInventoryModuleInterface:
-    def __init__(self, window, machinery_name, company, image, count, rate):
+    def __init__(self, window, machinery_name, company, brand, category, image, count, rate):
+        self.image = image
         self.image_path = None
         self.window = window
         self.window.title(machinery_name)
@@ -43,7 +43,8 @@ class UpdateInventoryModuleInterface:
         self.add_product_frame.configure(padx=20, pady=20, borderwidth=2, relief=SOLID)
 
         # Product Image
-        self.product_image = Image.open(BytesIO(image))
+        decoded_image_data = base64.b64decode(image)
+        self.product_image = Image.open(BytesIO(decoded_image_data))
         self.product_image = self.product_image.resize((200, 200))
         self.product_image = ImageTk.PhotoImage(self.product_image)
 
@@ -75,26 +76,42 @@ class UpdateInventoryModuleInterface:
         self.product_company_entry.grid(row=2, column=2, pady=(5, 5))
         self.product_company_entry.insert(0, company)
 
+        self.product_brand_label = Label(self.add_product_frame, text="Product Brand:", font=("Arial", 12),
+                                         bg="#968802", fg="white")
+        self.product_brand_label.grid(row=3, column=1, sticky="e", pady=(5, 5))
+
+        self.product_brand_entry = Entry(self.add_product_frame, font=("Arial", 12))
+        self.product_brand_entry.grid(row=3, column=2, pady=(5, 5))
+        self.product_brand_entry.insert(0, brand)
+
+        self.product_category_label = Label(self.add_product_frame, text="Product Company:", font=("Arial", 12),
+                                            bg="#968802", fg="white")
+        self.product_category_label.grid(row=4, column=1, sticky="e", pady=(5, 5))
+
+        self.product_category_entry = Entry(self.add_product_frame, font=("Arial", 12))
+        self.product_category_entry.grid(row=4, column=2, pady=(5, 5))
+        self.product_category_entry.insert(0, category)
+
         self.product_count_label = Label(self.add_product_frame, text="Product Count:", font=("Arial", 12),
                                          bg="#968802", fg="white")
-        self.product_count_label.grid(row=3, column=1, sticky="e", pady=(5, 5))
+        self.product_count_label.grid(row=4, column=1, sticky="e", pady=(5, 5))
 
         self.product_count_entry = Entry(self.add_product_frame, font=("Arial", 12))
-        self.product_count_entry.grid(row=3, column=2, pady=(5, 5))
+        self.product_count_entry.grid(row=4, column=2, pady=(5, 5))
         self.product_count_entry.insert(0, count)
 
         self.product_rate_label = Label(self.add_product_frame, text="Product Rate (K):", font=("Arial", 12),
                                         bg="#968802", fg="white")
-        self.product_rate_label.grid(row=4, column=1, sticky="e", pady=(5, 5))
+        self.product_rate_label.grid(row=5, column=1, sticky="e", pady=(5, 5))
 
         self.product_rate_entry = Entry(self.add_product_frame, font=("Arial", 12))
-        self.product_rate_entry.grid(row=4, column=2, pady=(5, 5))
+        self.product_rate_entry.grid(row=5, column=2, pady=(5, 5))
         self.product_rate_entry.insert(0, rate)
 
         # Add Product Button
         self.add_button = Button(self.add_product_frame, text=f"Update {machinery_name}", font=("Arial", 12, "bold"),
                                  bg="#487307", fg="white", width=25, height=2, command=self.add_product)
-        self.add_button.grid(row=5, column=1, columnspan=2, pady=(0, 20))
+        self.add_button.grid(row=6, column=1, columnspan=2, pady=(0, 20))
 
     def upload_image(self):
         file_path = filedialog.askopenfilename(title="Select an Image",
@@ -102,11 +119,13 @@ class UpdateInventoryModuleInterface:
         self.image_path = file_path
 
     def menu_interface(self):
-        InventoryManagementInterface.InventoryManagementInterface(self.window)
+        ViewInventoryModulesInterface.ViewInventoryModulesInterface(self.window, 0)
 
     def add_product(self):
         product_name = self.product_name_entry.get()
         product_company_name = self.product_company_entry.get()
+        product_category_name = self.product_category_entry.get()
+        product_brand_name = self.product_brand_entry.get()
         product_count = self.product_count_entry.get()
         product_rate = self.product_rate_entry.get()
         image_path = self.image_path
@@ -121,12 +140,15 @@ class UpdateInventoryModuleInterface:
 
         if image_path:
             with open(image_path, "rb") as image_file:
-                binary_data = Binary(image_file.read())
-            product_data = {"product_name": product_name, "product_company": product_company_name,
-                            "product_count": product_count, "product_rate": product_rate, "product_image": binary_data}
+                binary_data = image_file.read()
+                binary_data = base64.b64encode(binary_data).decode('utf-8')
+            product_data = {"ProductName": product_name, "ProductCompany": product_company_name,
+                            "ProductBrand": product_brand_name, "CategoryName": product_category_name,
+                            "ProductPrice": product_rate, "QuantityInStock": product_count, "ProductImage": binary_data}
         else:
-            product_data = {"product_name": product_name, "product_company": product_company_name,
-                            "product_count": product_count, "product_rate": product_rate}
+            product_data = {"ProductName": product_name, "ProductCompany": product_company_name,
+                            "ProductBrand": product_brand_name, "CategoryName": product_category_name,
+                            "ProductPrice": product_rate, "QuantityInStock": product_count, "ProductImage": self.image}
 
         # Create a top-level window for confirmation
         confirmation_window = Toplevel(self.window)
@@ -139,6 +161,8 @@ class UpdateInventoryModuleInterface:
         # Display the data in the confirmation window
         data_label = Label(confirmation_window, text=f"Product Name: {product_name}\n"
                                                      f"Product Company :{product_company_name}\n"
+                                                     f"Product Brand :{product_brand_name}\n"
+                                                     f"Product Category :{product_category_name}\n"
                                                      f"Product Count: {product_count}\n"
                                                      f"Product Rate: {product_rate}\n", font=("Arial", 12),
                            bg="#968802", fg="white")
@@ -149,6 +173,14 @@ class UpdateInventoryModuleInterface:
             image = image.resize((300, 300))
             image = ImageTk.PhotoImage(image)
 
+            image_label = Label(confirmation_window, image=image)
+            image_label.image = image
+            image_label.pack()
+        else:
+            decoded_image_data = base64.b64decode(self.image)
+            image = Image.open(BytesIO(decoded_image_data))
+            image = image.resize((200, 200))
+            image = ImageTk.PhotoImage(image)
             image_label = Label(confirmation_window, image=image)
             image_label.image = image
             image_label.pack()
@@ -166,7 +198,7 @@ class UpdateInventoryModuleInterface:
         self.window.attributes('-topmost', True)
         self.window.state('zoomed')
         result = product.update_one(
-            {"product_name": product_data["product_name"], "product_company": product_data["product_company"]},
+            {"ProductName": product_data["ProductName"], "ProductCompany": product_data["ProductCompany"]},
             {"$set": product_data})
 
         if result.modified_count > 0:
@@ -174,6 +206,8 @@ class UpdateInventoryModuleInterface:
 
             self.product_name_entry.delete(0, END)
             self.product_company_entry.delete(0, END)
+            self.product_brand_entry.delete(0, END)
+            self.product_category_entry.delete(0, END)
             self.product_count_entry.delete(0, END)
             self.product_rate_entry.delete(0, END)
 
