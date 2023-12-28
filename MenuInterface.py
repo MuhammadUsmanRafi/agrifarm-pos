@@ -1,4 +1,5 @@
 from tkinter import *
+
 from PIL import Image, ImageTk
 
 import CustomerInterface
@@ -42,7 +43,7 @@ class MenuInterface:
         self.upper_button.configure(padx=20, pady=20, borderwidth=2, relief=SOLID)
         self.buttons = []
         # Create a list of button labels
-        button_labels = ["Dashboard", "Inventory Management", "Customer Management", "Sales"]
+        button_labels = ["Companies", "Inventory Management", "Customer Management", "Sales"]
 
         # Create and pack buttons with adjusted width and height
         for label in button_labels:
@@ -69,7 +70,7 @@ class MenuInterface:
         # Place the upper_button Frame inside the menu_frame
         self.lower_button.pack()
 
-        self.buttons[0].config(command=lambda: self.dashboard())
+        self.buttons[0].config(command=lambda: self.companies())
         self.buttons[1].config(command=lambda: self.inventory())
         self.buttons[2].config(command=lambda: self.customer())
         self.buttons[3].config(command=lambda: self.sales())
@@ -78,7 +79,7 @@ class MenuInterface:
         self.buttons[6].config(command=lambda: self.setting())
         self.buttons[7].config(command=lambda: self.logout())
 
-    def dashboard(self):
+    def companies(self):
         DashboardInterface.DashboardInterface(self.window)
 
     def inventory(self):
