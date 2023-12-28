@@ -54,8 +54,7 @@ class ViewInventoryModulesInterface:
         self.search_frame.place(x=self.window.winfo_screenwidth() / 2 - 100, y=self.window.winfo_screenheight() / 8)
 
         # Search label
-        self.search_label = Label(self.search_frame, text="Search: ", font=("Arial", 12, "bold"),
-                                  background="white")
+        self.search_label = Label(self.search_frame, text="Search: ", font=("Arial", 12, "bold"), background="white")
         self.search_label.pack(side=LEFT, padx=(0, 10))
 
         # User entry for search
@@ -63,10 +62,8 @@ class ViewInventoryModulesInterface:
         self.user_entry.focus_set()
         self.user_entry.pack(fill="x", expand=True)
 
-        # Search button
-        self.search_button = Button(self.search_frame, text="Search", command=lambda: self.perform_search(num),
-                                    font=("Arial", 12), background="#968802", foreground="white")
-        self.search_button.pack(side=LEFT, padx=(10, 0))
+        # Bind the perform_search method to the KeyRelease event
+        self.user_entry.bind("<KeyRelease>", lambda event: self.perform_search(num))
 
         # Display all products initially
         self.display_products(num)
@@ -91,8 +88,8 @@ class ViewInventoryModulesInterface:
         search_term = self.user_entry.get().lower()
         if search_term:
             # Filter products based on the search term
-            filtered_products = [product_data for product_data in product.find()
-                                 if search_term in product_data["ProductName"].lower()]
+            filtered_products = [product_data for product_data in product.find() if
+                                 search_term in product_data["ProductName"].lower()]
         else:
             # If search term is empty, display all products
             filtered_products = product.find()
@@ -138,10 +135,10 @@ class ViewInventoryModulesInterface:
             button_text = "View" if num != 2 else "Update" if num == 2 else "Remove"
             button = Button(frame, text=button_text, font=("Arial", 12),
                             command=lambda name=product_name, comp=company, pbrand=brand, pcategory=category,
-                                           path=image_data, c=count, r=rate, n=num: self.button_click(name, comp, pbrand,
-                                                                                                 pcategory, path, c, r,
-                                                                                                 n), width=20,
-                            background="#968802", foreground="white")
+                                           path=image_data, c=count, r=rate, n=num: self.button_click(name, comp,
+                                                                                                      pbrand, pcategory,
+                                                                                                      path, c, r, n),
+                            width=20, background="#968802", foreground="white")
             button.pack(side=TOP, padx=10, pady=5)
 
             if num == 2:
