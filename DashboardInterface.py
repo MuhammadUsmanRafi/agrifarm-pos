@@ -23,8 +23,8 @@ class DashboardInterface:
         self.label = Label(self.window, image=self.background_image)
         self.label.place(x=0, y=0)
 
-        self.back_to_home_button = Button(self.window, text="Back", command=self.menu_interface,
-                                          font=("Arial", 12), bg="#487307", fg="white", width=15)
+        self.back_to_home_button = Button(self.window, text="Back", command=self.menu_interface, font=("Arial", 12),
+                                          bg="#487307", fg="white", width=15)
         self.back_to_home_button.place(x=10, y=10)  # Adjust the position
 
         self.dashboard_frame = Frame(self.window, bg="#968802", highlightbackground="#968802", highlightthickness=0)
@@ -39,13 +39,12 @@ class DashboardInterface:
 
         self.modules = []
         # Create a list of button labels
-        button_labels = ["Total Sales", "Recent Sales Product"]
+        button_labels = ["View Companies", "Add Company"]
 
         # Create and pack buttons with adjusted width and height
         for label in button_labels:
             button = Button(self.upper_button, text=label, font=("Arial", 12, "bold"), bg="#487307", fg="white",
-                            width=25,
-                            height=3)
+                            width=25, height=3)
             button.pack(side=LEFT, padx=10)
             self.modules.append(button)
 
@@ -56,7 +55,7 @@ class DashboardInterface:
         self.middle_button.configure(padx=20, pady=20, borderwidth=2, relief=SOLID)
 
         # Create a list of button labels
-        button_labels = ["Top Selling Products", "Available Inventory"]
+        button_labels = ["Delete Company", "Place Order"]
 
         # Create and pack buttons with adjusted width and height
         for label in button_labels:
@@ -71,23 +70,10 @@ class DashboardInterface:
                                   highlightthickness=0)
         self.lower_button.configure(padx=20, pady=20, borderwidth=2, relief=SOLID)
 
-        button_labels = ["Low Inventory Alert", "Notifications"]
-
-        for label in button_labels:
-            button = Button(self.lower_button, text=label, font=("Arial", 12, "bold"), bg="#487307", fg="white",
-                            width=25,
-                            height=3)
-            button.pack(side=LEFT, padx=10)
-            self.modules.append(button)
-
-        self.lower_button.pack()
-
         self.modules[0].config(command=lambda: self.modules_button(0))
         self.modules[1].config(command=lambda: self.modules_button(1))
         self.modules[2].config(command=lambda: self.modules_button(2))
         self.modules[3].config(command=lambda: self.modules_button(3))
-        self.modules[4].config(command=lambda: self.modules_button(4))
-        self.modules[5].config(command=lambda: self.modules_button(5))
 
     def modules_button(self, num):
         DashboardModuleInterface.DashboardModuleInterface(self.window, num)

@@ -1,5 +1,8 @@
 import base64
 import os
+import threading
+import time
+
 import gspread
 import pymongo
 import requests
@@ -21,7 +24,7 @@ client = gspread.authorize(creds)
 # Connect to the Google Sheet by its title
 sheet_title = "Participants data"
 spreadsheet = client.open(sheet_title)
-worksheet = spreadsheet.get_worksheet(1)  # assuming the data is in the first worksheet
+worksheet = spreadsheet.get_worksheet(2)  # assuming the data is in the first worksheet
 
 # Get all the data from the Google Sheet
 data = worksheet.get_all_records()
@@ -30,7 +33,9 @@ data = worksheet.get_all_records()
 images_directory = os.path.join(os.getcwd(), "images")
 os.makedirs(images_directory, exist_ok=True)
 
-for row in data:
+
+# Function to process each row
+def process_row(row):
     try:
         # Check if 'ProductImage' key exists in the row
         if 'ProductImage' in row:
@@ -41,8 +46,7 @@ for row in data:
             if image_url:
                 # Download the image from the URL with a custom User-Agent header
                 headers = {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                }
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
                 image_response = requests.get(image_url, headers=headers)
 
                 # Ensure the "images" directory exists
@@ -69,19 +73,34 @@ for row in data:
                 row[key] = value.strip()
 
         if row["ProductName"] == "":
-            break
+            return
+
         print(row["ProductName"])
         # Insert the row into MongoDB
-        collection.insert_one(row)
+        # collection.insert_one(row)
+        collection.update_one({"ProductName": row["ProductName"]}, {"$set": row}, upsert=True)
 
     except requests.exceptions.RequestException as e:
         # Print the error and continue to the next row
         print(f"Error processing row: {e}")
-        continue
     except Exception as e:
         # Print the error and continue to the next row
         print(f"Unhandled error processing row: {e}")
-        continue
+
+
+# Use threading for multithreading
+threads = []
+for row in data:
+    if row["ProductName"] == "":
+        break
+    thread = threading.Thread(target=process_row, args=(row,))
+    threads.append(thread)
+    time.sleep(0.5)
+    thread.start()
+
+# Wait for all threads to complete
+for thread in threads:
+    thread.join()
 
 # Close MongoDB connection
 mongo_client.close()

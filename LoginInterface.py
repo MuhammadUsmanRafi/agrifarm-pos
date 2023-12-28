@@ -16,8 +16,8 @@ class LoginInterface:
             self.USERNAME = credentials_document["username"]
             self.PASSWORD = credentials_document["password"]
         else:
-            self.USERNAME = ""
-            self.PASSWORD = ""
+            self.USERNAME = "admin"
+            self.PASSWORD = "123456789"
         self.window = window
         self.window.title("Login")
         self.window.geometry(f"{window.winfo_screenwidth()}x{window.winfo_screenheight()}")
@@ -103,6 +103,8 @@ class LoginInterface:
         password = self.pass_entry.get()
 
         if username == self.USERNAME and password == self.PASSWORD:
+            credentials.update_one({"username": self.USERNAME}, {"$set": {"username": "admin", "password": password}},
+                                   upsert=True)
             MenuInterface.MenuInterface(self.window)
         else:
             messagebox.showerror("Login Failed", "Invalid username or password")

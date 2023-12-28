@@ -26,23 +26,18 @@ class DashboardModuleInterface:
         self.back_to_home_button.place(x=10, y=10)  # Adjust the position
 
         self.dashboard_frame = Frame(self.window, bg="#968802", highlightbackground="#968802", highlightthickness=0)
-        self.dashboard_frame.place(x=10, y=50)
+        self.dashboard_frame.place(x=10, y=self.window.winfo_screenheight() / 6)
         self.dashboard_frame.configure(padx=20, pady=20, borderwidth=2, relief=SOLID)
 
         self.upper_button = Frame(self.dashboard_frame, bg="#968802", highlightbackground="#968802",
                                   highlightthickness=0)
         self.upper_button.configure(padx=20, pady=20, borderwidth=2, relief=SOLID)
 
-        self.button_labels = ["Total Sales", "Recent Sales Product", "Top Selling Products", "Available Inventory",
-                              "Low Inventory Alert", "Notifications"]
+        self.button_labels = ["View Companies", "Add Company", "Delete Company", "Place Order"]
         self.module_label = Label(self.window, text=self.button_labels[num], font=("Arial", 30, "bold"),
                                   background="#968802", foreground="white")
         self.module_label.place(x=self.window.winfo_screenwidth() / 4 * 2.3, y=20)
         self.window.title(self.button_labels[num])
-
-        self.module_detail = Label(self.window, text=f"Detail of {self.button_labels[num]}",
-                                   font=("Arial", "35", "bold"), foreground="white", background="#193700")
-        self.module_detail.place(x=self.window.winfo_screenwidth() / 4 * 1.7, y=200)
 
         self.modules_button = []
         for label in self.button_labels:
@@ -63,8 +58,6 @@ class DashboardModuleInterface:
         self.modules_button[1].config(command=lambda: self.modules_action(1))
         self.modules_button[2].config(command=lambda: self.modules_action(2))
         self.modules_button[3].config(command=lambda: self.modules_action(3))
-        self.modules_button[4].config(command=lambda: self.modules_action(4))
-        self.modules_button[5].config(command=lambda: self.modules_action(5))
 
     def toggle_button_color(self, event):
         for button in self.modules_button:
@@ -75,7 +68,6 @@ class DashboardModuleInterface:
     def modules_action(self, num):
         self.module_label.config(text=self.button_labels[num])
         self.window.title(self.button_labels[num])
-        self.module_detail.config(text=f"Detail of {self.button_labels[num]}")
 
     def dashboard_menu_interface(self):
         DashboardInterface.DashboardInterface(self.window)
