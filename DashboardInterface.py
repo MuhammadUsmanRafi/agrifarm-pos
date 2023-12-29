@@ -2,7 +2,8 @@ from tkinter import *
 
 from PIL import Image, ImageTk
 
-import DashboardModuleInterface, AddCompanyInvertory
+import AddCompanyInvertory
+import DashboardModuleInterface
 import MenuInterface
 import ViewCompaniesInterface
 
@@ -56,7 +57,7 @@ class DashboardInterface:
         self.middle_button.configure(padx=20, pady=20, borderwidth=2, relief=SOLID)
 
         # Create a list of button labels
-        button_labels = ["Remove Company", "Place Order"]
+        button_labels = ["Remove Company", "Product Orders"]
 
         # Create and pack buttons with adjusted width and height
         for label in button_labels:

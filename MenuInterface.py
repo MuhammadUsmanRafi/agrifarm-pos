@@ -43,7 +43,7 @@ class MenuInterface:
         self.upper_button.configure(padx=20, pady=20, borderwidth=2, relief=SOLID)
         self.buttons = []
         # Create a list of button labels
-        button_labels = ["Companies", "Inventory Management", "Customer Management", "Sales"]
+        button_labels = ["Companies Management", "Inventory Management", "Customer Management", "Sales"]
 
         # Create and pack buttons with adjusted width and height
         for label in button_labels:
