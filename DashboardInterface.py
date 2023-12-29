@@ -6,6 +6,7 @@ import AddCompanyInvertory
 import DashboardModuleInterface
 import MenuInterface
 import ViewCompaniesInterface
+import CompanyOrders
 
 
 class DashboardInterface:
@@ -83,7 +84,7 @@ class DashboardInterface:
         elif num == 1:
             AddCompanyInvertory.AddCompanyInventory(self.window, num)
         else:
-            DashboardModuleInterface.DashboardModuleInterface(self.window, num)
+            CompanyOrders.CompanyOrders(self.window, num)
 
     def menu_interface(self):
         MenuInterface.MenuInterface(self.window)
