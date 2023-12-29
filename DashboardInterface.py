@@ -84,7 +84,7 @@ class DashboardInterface:
         elif num == 1:
             AddCompanyInvertory.AddCompanyInventory(self.window, num)
         else:
-            CompanyOrders.CompanyOrders(self.window, num)
+            CompanyOrders.CompanyOrders(self.window)
 
     def menu_interface(self):
         MenuInterface.MenuInterface(self.window)

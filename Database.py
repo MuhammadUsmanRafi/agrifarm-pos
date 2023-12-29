@@ -7,3 +7,5 @@ database = client.Agrifarm
 product = database.Products
 credentials = database.credentials
 company = database.Companies
+companyorders = database.companyorders
+productsales = database.productsales

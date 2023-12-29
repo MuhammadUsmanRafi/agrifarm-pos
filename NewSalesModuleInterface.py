@@ -103,15 +103,6 @@ class NewSalesModuleInterface:
                                        foreground="white")
         product_category_label.grid(row=0, column=0, padx=10, pady=5, sticky="w")
 
-        self.product_category_var = StringVar()
-        self.product_category_var.set("Select Category")
-        self.product_category_choices = ["Machines", "Components"]
-
-        self.product_category_menu = OptionMenu(self.product_frame, self.product_category_var,
-                                                *self.product_category_choices)
-        self.product_category_menu.config(width=23)
-        self.product_category_menu.grid(row=0, column=1, padx=10, pady=5, sticky="w")
-
         product_name_label = Label(self.product_frame, text="Product", font=("Arial", 12, "bold"), bg="#968802",
                                    foreground="white")
         product_name_label.grid(row=1, column=0, padx=10, pady=5, sticky="w")

@@ -3,10 +3,12 @@ from tkinter import *
 from PIL import Image, ImageTk
 
 import DashboardInterface
+import PlaceOrderInterface
+import ViewComanyOrdersInterface
 
 
 class CompanyOrders:
-    def __init__(self, window, num):
+    def __init__(self, window):
         self.window = window
         self.window.title("Company Orders")
         self.window.geometry(f"{window.winfo_screenwidth()}x{window.winfo_screenheight()}")
@@ -54,9 +56,9 @@ class CompanyOrders:
 
     def modules_button(self, num):
         if num == 0:
-            pass
+            PlaceOrderInterface.PlaceOrderInterface(self.window)
         if num == 1:
-            pass
+            ViewComanyOrdersInterface.CompanyOrdersInterface(self.window)
 
     def menu_interface(self):
         DashboardInterface.DashboardInterface(self.window)
