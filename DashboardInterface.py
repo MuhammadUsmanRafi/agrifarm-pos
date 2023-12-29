@@ -2,8 +2,9 @@ from tkinter import *
 
 from PIL import Image, ImageTk
 
-import DashboardModuleInterface
+import DashboardModuleInterface, AddCompanyInvertory
 import MenuInterface
+import ViewCompaniesInterface
 
 
 class DashboardInterface:
@@ -55,7 +56,7 @@ class DashboardInterface:
         self.middle_button.configure(padx=20, pady=20, borderwidth=2, relief=SOLID)
 
         # Create a list of button labels
-        button_labels = ["Delete Company", "Place Order"]
+        button_labels = ["Remove Company", "Place Order"]
 
         # Create and pack buttons with adjusted width and height
         for label in button_labels:
@@ -76,7 +77,12 @@ class DashboardInterface:
         self.modules[3].config(command=lambda: self.modules_button(3))
 
     def modules_button(self, num):
-        DashboardModuleInterface.DashboardModuleInterface(self.window, num)
+        if num == 0 or num == 2:
+            ViewCompaniesInterface.ViewCompaniesInterface(self.window, num)
+        elif num == 1:
+            AddCompanyInvertory.AddCompanyInventory(self.window, num)
+        else:
+            DashboardModuleInterface.DashboardModuleInterface(self.window, num)
 
     def menu_interface(self):
         MenuInterface.MenuInterface(self.window)
@@ -84,5 +90,5 @@ class DashboardInterface:
 
 if __name__ == "__main__":
     root = Tk()
-    login_interface = MenuInterface.MenuInterface(root)
+    login_interface = DashboardInterface(root)
     root.mainloop()
