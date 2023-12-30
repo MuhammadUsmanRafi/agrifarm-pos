@@ -1,5 +1,6 @@
 import time
 from tkinter import *
+from tkinter import messagebox
 from tkinter import ttk
 
 import qrcode
@@ -11,8 +12,12 @@ from Database import product
 
 class NewSalesModuleInterface:
     def __init__(self, window):
-
+        self.discount_check = False
+        self.total_price = 0
+        self.discount_bill = 0
+        self.original_total = 0
         self.product_collection = product
+        self.cart_items = []
         self.window = window
         self.window.title("Sales")
         self.window.geometry(f"{window.winfo_screenwidth()}x{window.winfo_screenheight()}")
@@ -73,7 +78,7 @@ class NewSalesModuleInterface:
         self.customer_name_entry = Entry(self.customer_entries_frame, font=("Arial", 12, "bold"))
         self.customer_name_entry.grid(row=0, column=4, padx=10, pady=5, sticky="w")
 
-        phone_label = Label(self.customer_entries_frame, text="Customer Phone:", font=("Arial", 12, "bold"),
+        phone_label = Label(self.customer_entries_frame, text="Phone or Email:", font=("Arial", 12, "bold"),
                             bg="#968802", foreground="white")
         phone_label.grid(row=0, column=5, padx=10, pady=5, sticky="w")
 
@@ -172,10 +177,7 @@ class NewSalesModuleInterface:
         self.bill_area.place(x=self.window.winfo_screenwidth() / 2 * 1.276, y=self.window.winfo_screenheight() / 3 - 9)
         self.bill_area.configure(padx=20, pady=20, borderwidth=2, relief=SOLID)
 
-        bill_label = Label(self.bill_area, bg="white", foreground="#968802", text="Bill Area",
-                           font=("Arial", 20, "bold"), anchor="center")
-        bill_label.config(padx=180, pady=200)
-        bill_label.pack()
+        self.update_bill_area()
 
     def show_product_list(self, window):
         self.window = window
@@ -269,14 +271,148 @@ class NewSalesModuleInterface:
             # Destroy the product list window
             new_window.destroy()
 
+    def add_to_cart(self):
+        # Get values from entry fields
+        product_name = self.product_name_entry.get()
+        entered_quantity = self.quantity_entry.get()
+
+        # Check if the entered quantity is a valid positive integer
+        if not entered_quantity.isdigit() or int(entered_quantity) <= 0:
+            messagebox.showinfo("Invalid Quantity", "Please enter a valid positive quantity.")
+            return
+
+        # Convert entered quantity to an integer
+        quantity = int(entered_quantity)
+
+        # Check if the product exists in the database
+        selected_product = self.product_collection.find_one({"ProductName": product_name})
+
+        if selected_product:
+            # Extract product details from the database
+            quantity_in_stock = selected_product["QuantityInStock"]
+            price_in_stock = selected_product["ProductPrice"]
+
+            # Check if the entered quantity is less than or equal to the quantity in stock
+            if quantity <= quantity_in_stock:
+                # Check if the product is already in the cart
+                existing_cart_item = next((item for item in self.cart_items if item["Product Name"] == product_name),
+                                          None)
+
+                if existing_cart_item:
+                    # Update the quantity of the existing item
+                    self.total_price -= existing_cart_item["t_Price"]
+                    existing_cart_item["Quantity"] = quantity
+                    existing_cart_item["t_Price"] = price_in_stock * existing_cart_item["Quantity"]
+                    self.total_price += existing_cart_item["t_Price"]
+                else:
+                    # Use the actual price from the database instead of dummy data
+                    price = price_in_stock
+                    t_price = price_in_stock * quantity
+                    self.total_price += t_price
+
+                    # Create a dictionary for the cart item
+                    cart_item = {"Product Name": product_name, "Quantity": quantity, "Unit Price": price,
+                                 "t_Price": t_price}
+
+                    # Add the cart item to the list
+                    self.cart_items.append(cart_item)
+
+                # Update the bill area
+                self.update_bill_area()
+
+                # Clear the entry fields
+                self.clear()
+            else:
+                messagebox.showinfo("Insufficient Stock",
+                                    f"Quantity is higher than the stock available ({quantity_in_stock}).")
+
+    def update_cart(self):
+        selected_item = self.cart_tree.selection()
+        if selected_item:
+            # Get the selected item index
+            item_index = int(selected_item[0][1:]) - 1
+
+            # Get the selected cart item
+            selected_cart_item = self.cart_items[item_index]
+
+            # Set the product name and quantity in the entry fields
+            self.product_name_entry.delete(0, END)
+            self.product_name_entry.insert(0, selected_cart_item["Product Name"])
+            self.quantity_entry.delete(0, END)
+            self.quantity_entry.insert(0, selected_cart_item["Quantity"])
+
+            # Update the bill area
+            self.update_bill_area()
+
+    def delete_cart(self):
+        selected_item = self.cart_tree.selection()
+        if selected_item:
+            # Get the selected item index
+            item_index = int(selected_item[0][1:]) - 1
+
+            # Subtract the t_Price of the selected item from the total_price
+            self.total_price -= self.cart_items[item_index]["t_Price"]
+
+            # Remove the selected item from the cart_items list
+            del self.cart_items[item_index]
+
+            # Update the bill area
+            self.update_bill_area()
+
+    def update_bill_area(self):
+        # Clear existing items in the Treeview and buttons
+        for item in self.bill_area.winfo_children():
+            item.destroy()
+
+        # Create Treeview to display cart details
+        self.cart_tree = ttk.Treeview(self.bill_area, columns=("Product Name", "Quantity", "Unit Price", "t_Price"),
+                                      height=14)
+        self.cart_tree.heading("Product Name", text="Product Name")
+        self.cart_tree.heading("Quantity", text="Quantity")
+        self.cart_tree.heading("Unit Price", text="Unit Price")
+        self.cart_tree.heading("t_Price", text="t_Price")
+        self.cart_tree["show"] = "headings"
+
+        column_widths = {"Product Name": 180, "Quantity": 70, "Unit Price": 70, "t_Price": 120}
+        for column, width in column_widths.items():
+            self.cart_tree.column(column, width=width, anchor="center")
+
+        self.cart_tree.grid(row=0, column=0, columnspan=2, pady=5, sticky="nsew")
+
+        # Add items to the Treeview
+        for i, item in enumerate(self.cart_items):
+            self.cart_tree.insert("", "end",
+                                  values=(item["Product Name"], item["Quantity"], item["Unit Price"], item["t_Price"]))
+
+        discount_bill_label = Label(self.bill_area, text="Discount Bill", font=("Arial", 12, "bold"), bg="white")
+        discount_bill_label.grid(row=1, column=0, padx=6, pady=2, sticky="nsew")
+
+        discount_bill = Label(self.bill_area, text=f"{self.discount_bill}", font=("Arial", 12, "bold"), bg="white")
+        discount_bill.grid(row=1, column=1, padx=6, pady=2, sticky="nsew")
+
+        self.total_bill_label = Label(self.bill_area, text="Total Bill", font=("Arial", 12, "bold"), bg="white")
+        self.total_bill_label.grid(row=2, column=0, padx=6, pady=2, sticky="nsew")
+
+        total_bill = Label(self.bill_area, text=f"{self.total_price}", font=("Arial", 12, "bold"), bg="white")
+        total_bill.grid(row=2, column=1, padx=6, pady=2, sticky="nsew")
+
+        # Buttons for updating or deleting selected row in the cart
+        update_button = Button(self.bill_area, text="Update", command=self.update_cart, font=("Arial", 12, "bold"),
+                               bg="#487307", fg="white", width=12, height=2)
+        update_button.grid(row=3, column=0, padx=6, pady=2, sticky="nsew")
+        delete_button = Button(self.bill_area, text="Delete", command=self.delete_cart, font=("Arial", 12, "bold"),
+                               bg="#487307", fg="white", width=12, height=2)
+        delete_button.grid(row=3, column=1, padx=6, pady=2, sticky="nsew")
+
     def total(self):
-        pass
+        self.total_price = self.total_price - self.discount_bill
+        self.update_bill_area()
 
     def generate_bill(self):
         pass
 
     def clear_field(self):
-        pass
+        NewSalesModuleInterface(self.window)
 
     def generate_qr_code(self, data):
         qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=5, border=2, )
@@ -293,7 +429,21 @@ class NewSalesModuleInterface:
         self.qr_img_label.image = qr_code_image
 
     def discount(self, percentage):
-        pass
+        if self.total_price > 0:
+            self.original_total = sum(cart_item["t_Price"] for cart_item in self.cart_items)
+
+            if self.discount_check:
+                self.discount_bill = 0
+
+            discounted_total = self.original_total * (percentage / 100)
+
+            self.discount_bill = self.original_total - (self.original_total - discounted_total)
+
+            self.total_price = self.original_total
+
+            self.discount_check = True
+
+            self.update_bill_area()
 
     def menu_interface(self):
         SalesInterface.SalesInterface(self.window)
@@ -304,9 +454,6 @@ class NewSalesModuleInterface:
         self.window.after(1000, self.update_time)
 
     def search_bill(self):
-        pass
-
-    def add_to_cart(self):
         pass
 
     def clear(self):
