@@ -5,7 +5,6 @@ from PIL import Image, ImageTk
 import DayTransactionModuleInterface
 import MenuInterface
 import NewSalesModuleInterface
-import ManageInvoiceModuleInterface
 
 
 class SalesInterface:
@@ -64,29 +63,14 @@ class SalesInterface:
 
         self.middle_button.pack()
 
-        self.lower_button = Frame(self.sales_frame, bg="#968802", highlightbackground="#968802", highlightthickness=0)
-        self.lower_button.configure(padx=20, pady=20, borderwidth=2, relief=SOLID)
-
-        button_labels = ["Manage Invoice"]
-        for label in button_labels:
-            button = Button(self.lower_button, text=label, font=("Arial", 12, "bold"), bg="#487307", fg="white",
-                            width=25, height=3)
-            button.pack(side=LEFT, padx=10)
-            self.modules_button.append(button)
-        self.lower_button.pack()
-
         self.modules_button[0].config(command=self.new_sales_modules_function)
         self.modules_button[1].config(command=self.day_transaction_modules_function)
-        self.modules_button[2].config(command=self.invoice_modules_function)
 
     def new_sales_modules_function(self):
         NewSalesModuleInterface.NewSalesModuleInterface(self.window)
 
     def day_transaction_modules_function(self):
         DayTransactionModuleInterface.DayTransactionModuleInterface(self.window)
-
-    def invoice_modules_function(self):
-        ManageInvoiceModuleInterface.ManageInvoiceModuleInterface(self.window)
 
     def menu_interface(self):
         MenuInterface.MenuInterface(self.window)
