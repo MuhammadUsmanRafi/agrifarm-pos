@@ -1,4 +1,6 @@
+import base64
 import time
+from io import BytesIO
 from tkinter import *
 from tkinter import messagebox
 from tkinter import ttk
@@ -7,7 +9,7 @@ import qrcode
 from PIL import Image, ImageTk
 
 import SalesInterface
-from Database import product
+from Database import product, productsales
 
 
 class NewSalesModuleInterface:
@@ -66,6 +68,12 @@ class NewSalesModuleInterface:
 
         self.bill_no_entry = Entry(self.customer_entries_frame, font=("Arial", 12, "bold"))
         self.bill_no_entry.grid(row=0, column=1, padx=10, pady=5, sticky="w")
+        self.bill_no_entry.delete(0, END)
+        latest_bill = productsales.find_one(sort=[("BillNo", -1)])
+        if latest_bill:
+            self.bill_no_entry.insert(0, latest_bill["BillNo"] + 1)
+        else:
+            self.bill_no_entry.insert(0, "1")
 
         search_button = Button(self.customer_entries_frame, text="Search", command=self.search_bill,
                                font=("Arial", 12, "bold"), bg="#487307", fg="white")
@@ -404,26 +412,103 @@ class NewSalesModuleInterface:
                                bg="#487307", fg="white", width=12, height=2)
         delete_button.grid(row=3, column=1, padx=6, pady=2, sticky="nsew")
 
+        self.show_qr_code()
+
     def total(self):
         self.total_price = self.total_price - self.discount_bill
         self.update_bill_area()
+        self.show_qr_code()
 
     def generate_bill(self):
-        pass
+        if not self.cart_items:
+            messagebox.showinfo("No Product Selected", "Please select at least one product.")
+            return
+
+        # Check if all fields are filled
+        if not all([self.bill_no_entry.get(), self.customer_name_entry.get(), self.customer_phone_entry.get()]):
+            messagebox.showinfo("Incomplete Fields", "Please fill in all the required fields.")
+            return
+
+        # Get data from fields
+        bill_no = int(self.bill_no_entry.get())
+        customer_name = self.customer_name_entry.get()
+        customer_phone = self.customer_phone_entry.get()
+        current_time = time.strftime("%Y-%m-%d %H:%M:%S")
+
+        # Prepare data for insertion or update in productsales database
+        sales_data = {"BillNo": bill_no, "CustomerName": customer_name, "CustomerPhone": customer_phone,
+                      "TotalPrice": self.total_price, "DiscountedPrice": self.total_price - self.discount_bill,
+                      "DateTime": current_time, "Products": self.cart_items}
+
+        # 1. Insert QR code base64 into the database
+        qr_code_base64 = self.generate_qr_code_base64(sales_data)
+        sales_data["QRCodeBase64"] = qr_code_base64
+
+        # 2. Update selected product quantity in the database
+        for item in self.cart_items:
+            product_name = item["Product Name"]
+            selected_product = self.product_collection.find_one({"ProductName": product_name})
+
+            if selected_product:
+                # Update product quantity in stock
+                new_quantity = selected_product["QuantityInStock"] - item["Quantity"]
+                self.product_collection.update_one({"ProductName": product_name},
+                                                   {"$set": {"QuantityInStock": new_quantity}})
+
+        # Check if the bill_no already exists in the database
+        existing_bill = productsales.find_one({"BillNo": bill_no})
+        if existing_bill:
+            # Update the existing document
+            productsales.update_one({"BillNo": bill_no}, {"$set": sales_data})
+            messagebox.showinfo("Update Successful", "Bill updated successfully.")
+        else:
+            # Insert a new document
+            productsales.insert_one(sales_data)
+            messagebox.showinfo("Insert Successful", "New bill inserted successfully.")
+
+        # Clear fields and reset the UI
+        self.clear_field()
 
     def clear_field(self):
         NewSalesModuleInterface(self.window)
 
-    def generate_qr_code(self, data):
-        qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=5, border=2, )
+    def generate_qr_code_base64(self, data):
+        # Generate QR code
+        qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=5, border=1)
         qr.add_data(data)
         qr.make(fit=True)
 
         img = qr.make_image(fill_color="black", back_color="white")
+        img = img.resize((175, 175))
+
+        # Convert image to base64
+        buffered = BytesIO()
+        img.save(buffered, format="PNG")
+        img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
+
+        return img_base64
+
+    def generate_qr_code(self, data):
+        qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=5, border=1, )
+        qr.add_data(data)
+        qr.make(fit=True)
+
+        img = qr.make_image(fill_color="black", back_color="white")
+        img = img.resize((175, 175))
         return ImageTk.PhotoImage(image=img)
 
     def show_qr_code(self):
-        data = "This is the data of the QR code"
+        # Gather data for the QR code
+        bill_no = self.bill_no_entry.get()
+        customer_name = self.customer_name_entry.get()
+        customer_phone = self.customer_phone_entry.get()
+
+        selected_products = "\n".join(
+            f"{item['Product Name']} - {item['Quantity']} units - ${item['t_Price']}" for item in self.cart_items)
+
+        data = f"Bill No: {bill_no}\nCustomer Name: {customer_name}\nCustomer Phone/Email: {customer_phone}\n\nSelected Products:\n{selected_products}"
+
+        # Generate and display the QR code
         qr_code_image = self.generate_qr_code(data)
         self.qr_img_label.config(image=qr_code_image)
         self.qr_img_label.image = qr_code_image
@@ -454,12 +539,43 @@ class NewSalesModuleInterface:
         self.window.after(1000, self.update_time)
 
     def search_bill(self):
-        pass
+        # Retrieve the bill number entered by the user
+        bill_no = int(self.bill_no_entry.get())
+
+        # Query the database to check if the bill exists
+        existing_bill = productsales.find_one({"BillNo": bill_no})
+
+        if existing_bill:
+            # Retrieve data from the existing bill
+            customer_name = existing_bill["CustomerName"]
+            customer_phone = existing_bill["CustomerPhone"]
+            selected_products = existing_bill["Products"]
+
+            # Update UI with the retrieved data
+            self.customer_name_entry.delete(0, END)
+            self.customer_name_entry.insert(0, customer_name)
+            self.customer_phone_entry.delete(0, END)
+            self.customer_phone_entry.insert(0, customer_phone)
+
+            # Add products from the existing bill to the cart
+            self.cart_items = selected_products
+            self.total_price = existing_bill["TotalPrice"]
+
+            # Update the bill area
+            self.update_bill_area()
+
+            # Show QR code
+            self.show_qr_code()
+
+            messagebox.showinfo("Bill Found", f"Bill {bill_no} found and loaded.")
+        else:
+            messagebox.showinfo("Bill Not Found", f"Bill {bill_no} not found in the database.")
 
     def clear(self):
         self.product_name_entry.delete(0, END)
         self.quantity_entry.delete(0, END)
         self.product_name_entry.focus_set()
+        self.show_qr_code()
 
 
 if __name__ == "__main__":
