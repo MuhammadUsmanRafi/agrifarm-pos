@@ -1,140 +1,205 @@
-from datetime import datetime, timedelta
+import smtplib
+import tkinter as tk
+from datetime import datetime
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from tkinter import *
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
 from PIL import Image, ImageTk
 
-import SalesInterface
-from Database import productsales
+import CompanyOrders
+from Database import company, companyorders, warehouses
 
 
-class DayTransactionModuleInterface:
+class PlaceOrderInterface:
     def __init__(self, window):
-        self.products = []
         self.window = window
-        self.db = productsales
-        self.window.title("Transaction")
-        self.window.geometry(f"{window.winfo_screenwidth()}x{window.winfo_screenheight()}")
-        self.window.iconbitmap("icon.ico")
+        self.window.title("Place Order")
+
+        # Get the screen width and height
+        screen_width = window.winfo_screenwidth()
+        screen_height = window.winfo_screenheight()
+
+        # Set the window size to fill the entire screen
+        self.window.geometry(f"{screen_width}x{screen_height}")
 
         # Set background image for the login window
-        background_image_path = "assets/transaction.png"
+        background_image_path = "assets/login_bg2.png"
         self.background_image = Image.open(background_image_path)
         self.background_image = self.background_image.resize(
             (self.window.winfo_screenwidth(), self.window.winfo_screenheight()))
         self.background_image = ImageTk.PhotoImage(self.background_image)
 
-        self.label = Label(self.window, image=self.background_image)
+        self.label = tk.Label(self.window, image=self.background_image)
         self.label.place(x=0, y=0)
 
         self.back_to_home_button = Button(self.window, text="Back", command=self.menu_interface, font=("Arial", 12),
                                           bg="#487307", fg="white", width=15)
         self.back_to_home_button.place(x=10, y=10)
 
-        # Frame to contain the Treeview
-        frame = Frame(self.window, background="white")
-        frame.place(x=self.window.winfo_screenwidth() / 8.2, y=self.window.winfo_screenheight() / 3)
+        self.company_collection = company
+        self.orders_collection = companyorders
 
-        # Treeview for displaying data
-        self.tree = ttk.Treeview(frame, show="headings", height=16)
-        self.tree["columns"] = ("BillNo", "CustomerName", "CustomerPhone", "TotalPrice", "DiscountedPrice", "DateTime")
+        self.outer = tk.Frame(self.window, bg="#968802", highlightbackground="#968802", highlightthickness=0)
+        self.outer.place(x=(self.window.winfo_screenwidth() / 2), y=self.window.winfo_screenheight() / 2 + 20,
+                         anchor="center")
+        self.outer.configure(padx=20, pady=20, borderwidth=2, relief=SOLID)
+        # Frame to hold the content
+        content_frame = tk.Frame(self.outer, bg="#968802", highlightbackground="#968802", highlightthickness=0)
+        content_frame.pack()
+        content_frame.config(padx=20, pady=20, borderwidth=2, relief=SOLID)
 
-        self.tree.heading("#1", text="BillNo")
-        self.tree.heading("#2", text="CustomerName")
-        self.tree.heading("#3", text="CustomerPhone")
-        self.tree.heading("#4", text="TotalPrice")
-        self.tree.heading("#5", text="DiscountedPrice")
-        self.tree.heading("#6", text="DateTime")
+        # Dropdown menu for selecting a company
+        self.company_label = tk.Label(content_frame, text="Select Company:", font=("Arial", 12), bg="#968802",
+                                      fg="white")
+        self.company_label.pack(pady=10)
 
-        # Set column widths
-        column_widths = {"BillNo": 170, "CustomerName": 170, "CustomerPhone": 170, "TotalPrice": 170,
-                         "DiscountedPrice": 170, "DateTime": 170}
+        # Fetch company names from the database
+        company_names = [companies["CName"] for companies in self.company_collection.find()]
 
-        for column, width in column_widths.items():
-            self.tree.column(column, width=width, anchor="center")
+        self.selected_company = tk.StringVar()
+        self.company_dropdown = ttk.Combobox(content_frame, textvariable=self.selected_company, values=company_names,
+                                             font=("Arial", 12))
+        self.company_dropdown.pack()
+        self.company_dropdown.set("Select Company")
 
-        self.tree.pack()
+        # Dropdown menu for selecting a warehouse
+        self.warehouse_label = tk.Label(content_frame, text="Select Warehouse:", font=("Arial", 12), bg="#968802",
+                                        fg="white")
+        self.warehouse_label.pack(pady=10)
 
-        button = Button(frame, text="Show Products", font=("Arial", 12, "bold"), bg="#487307", fg="white", width=25,
-                        height=3, command=self.show_products)
-        button.pack(side=BOTTOM, pady=10, padx=10)
+        # Fetch warehouse names from the database
+        warehouse_names = [wh["warehouseName"] for wh in warehouses.find()]
 
-        # Frame for displaying chart
-        self.chart_frame = Frame(self.window, background="white")
-        self.chart_frame.place(x=self.window.winfo_screenwidth() / 2, y=self.window.winfo_screenheight() / 2)
+        self.selected_warehouse = tk.StringVar()
+        self.warehouse_dropdown = ttk.Combobox(content_frame, textvariable=self.selected_warehouse,
+                                               values=warehouse_names, font=("Arial", 12))
+        self.warehouse_dropdown.pack()
+        self.warehouse_dropdown.set("Select Warehouse")
 
-        # Populate treeview with data
-        self.populate_treeview()
+        # Entries for entering product details
+        self.product_name_label = tk.Label(content_frame, text="Enter Product Name:", font=("Arial", 12), bg="#968802",
+                                           fg="white")
+        self.product_name_label.pack()
+
+        self.product_name_entry = tk.Entry(content_frame, font=("Arial", 12))
+        self.product_name_entry.pack()
+
+        self.quantity_label = tk.Label(content_frame, text="Enter Quantity:", font=("Arial", 12), bg="#968802",
+                                       fg="white")
+        self.quantity_label.pack()
+
+        self.quantity_entry = tk.Entry(content_frame, font=("Arial", 12))
+        self.quantity_entry.pack()
+
+        # Button to add product details
+        self.add_product_button = tk.Button(content_frame, text="Add More Product", command=self.add_product,
+                                            font=("Arial", 12), bg="#487307", fg="white", width=20, height=1)
+        self.add_product_button.pack(pady=5)
+
+        # Button to place the order
+        self.place_order_button = tk.Button(content_frame, text="Place Order", command=self.place_order,
+                                            font=("Arial", 12), bg="#487307", fg="white", width=20, height=1)
+        self.place_order_button.pack(pady=5)
+
+        # Lists to store product details
+        self.product_list = []
+
+    def add_product(self):
+        product_name = self.product_name_entry.get().strip()
+        quantity = self.quantity_entry.get().strip()
+
+        if not product_name or not quantity:
+            messagebox.showerror("Error", "Please enter product details.")
+            return
+
+        product_details = {"product_name": product_name, "quantity": quantity}
+        self.product_list.append(product_details)
+
+        # Clear the entry fields
+        self.product_name_entry.delete(0, tk.END)
+        self.product_name_entry.focus_set()
+        self.quantity_entry.delete(0, tk.END)
+
+    def place_order(self):
+        selected_company = self.selected_company.get()
+        selected_warehouse = self.selected_warehouse.get()
+
+        if selected_company == "Select Company" or selected_warehouse == "Select Warehouse" or not self.product_list:
+            messagebox.showerror("Error", "Please select a company, warehouse, and add products.")
+            return
+
+        # Convert date to datetime object for compatibility with MongoDB
+        order_date_pakistan = datetime.now()
+
+        order_data = {"company_name": selected_company, "products": self.product_list,
+                      "order_date": order_date_pakistan, "warehouse_name": selected_warehouse}
+
+        self.orders_collection.insert_one(order_data)
+
+        # Send an email to the company
+        company_info = self.company_collection.find_one({"CName": selected_company})
+        warehouse_info = warehouses.find_one({"warehouseName": selected_warehouse})
+
+        if company_info and "cEmail" in company_info and warehouse_info:
+            company_email = company_info["cEmail"]
+            sender_email = "musmanrajputt490@gmail.com"
+            sender_password = "iuox lzmd wzlr awrb"  # Replace with your email password
+
+            subject = "New Order Placement"
+            body = (
+                f"Dear Manager of {selected_company},\n\nA new order has been placed on {order_date_pakistan} from Agrifarm."
+                f"\n\nDetails:\n\n")
+
+            body += "<table border='1'><tr><th>Product Name</th><th>Quantity</th></tr>"
+            for product in self.product_list:
+                body += f"<tr><td>{product['product_name']}</td><td>{product['quantity']}</td></tr>"
+            body += "</table>"
+
+            body += (f"\n\nWarehouse Details:\n\n"
+                     f"Warehouse: {selected_warehouse}\n"
+                     f"Location: {warehouse_info.get('location', '')}\n"
+                     f"Contact: {warehouse_info.get('contact', {}).get('manager', '')}, "
+                     f"{warehouse_info.get('contact', {}).get('phone', '')}, "
+                     f"{warehouse_info.get('contact', {}).get('email', '')}\n\n"
+                     f'Best Regards,\n\n'
+                     f'Muhammad Usman\n\n'
+                     f'Manager of Agrifarm\n\n'
+                     f'Contact: +92 123 456789\n\n'
+                     f'Email: agrifarm@gmail.com')
+
+            # Set up the email message
+            message = MIMEMultipart()
+            message.attach(MIMEText(body, "html"))
+            message["Subject"] = subject
+            message["From"] = sender_email
+            message["To"] = company_email
+
+            # Connect to the SMTP server and send the email
+            with smtplib.SMTP("smtp.gmail.com", 587) as server:
+                server.starttls()
+                server.login(sender_email, sender_password)
+                server.sendmail(sender_email, company_email, message.as_string())
+
+            messagebox.showinfo("Success", "Order placed successfully! Email sent to the company.")
+        else:
+            messagebox.showwarning("Warning",
+                                   "Company email or warehouse details not found. Order placed successfully, but email not sent.")
+
+        # Clear the product list
+        self.product_list = []
+
+        result = messagebox.showinfo("Success", "Order placed successfully!")
+        if result:
+            CompanyOrders.CompanyOrders(self.window)
+
     def menu_interface(self):
-        SalesInterface.SalesInterface(self.window)
+        CompanyOrders.CompanyOrders(self.window)
 
-    def show_products(self):
-        selected_item = self.tree.selection()
-        if selected_item:
-            selected_row = self.tree.item(selected_item, "values")
-            bill_number = selected_row[0]
 
-            # Fetch product data from the database for the selected bill number
-            product_data = self.get_products_by_bill_number(bill_number)
-
-            # Create a table with product details in a new window
-            self.create_product_details_window(product_data)
-
-    def get_products_by_bill_number(self, bill_number):
-        product_data = []
-        for product in self.products:
-            if product["BillNo"] == int(bill_number):
-                product_data = product["Products"]
-        print(product_data)
-        return product_data
-
-    def create_product_details_window(self, product_data):
-        # Create a new window for displaying product details
-        details_window = Toplevel(self.window)
-        details_window.title("Product Details")
-
-        # Treeview for displaying product details
-        details_tree = ttk.Treeview(details_window, show="headings", height=16)
-        details_tree["columns"] = ("Product", "UnitPrice", "Quantity", "TotalPrice")
-
-        details_tree.heading("#1", text="Product")
-        details_tree.heading("#2", text="Unit Price")
-        details_tree.heading("#3", text="Quantity")
-        details_tree.heading("#4", text="Total Price")
-
-        # Set column widths
-        column_widths = {"Product": 200, "UnitPrice": 100, "Quantity": 100, "TotalPrice": 100}
-
-        for column, width in column_widths.items():
-            details_tree.column(column, width=width, anchor="center")
-
-        details_tree.pack()
-
-        # Insert product details into the Treeview
-        for item in product_data:
-            details_tree.insert("", "end",
-                                values=(item["Product Name"], item["Unit Price"], item["Quantity"], item["t_Price"]))
-
-        # OK button to close the details window
-        ok_button = Button(details_window, text="OK", command=details_window.destroy, font=("Arial", 12), bg="#487307",
-                           fg="white", width=15)
-        ok_button.pack(side=BOTTOM, pady=10, padx=10)
-
-    def populate_treeview(self):
-        current_date = datetime.now()
-        start_of_today = current_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        start_of_tomorrow = start_of_today + timedelta(days=1)
-
-        # Fetch data from the database for the entire current day
-        data = self.db.find()
-
-        for index, row in enumerate(data, start=1):
-            # Convert the string representation of the date to a datetime object
-            row_date = datetime.strptime(row["DateTime"], "%Y-%m-%d %H:%M:%S")
-
-            if row_date.date() == current_date.date():
-                self.products.append({"BillNo": row["BillNo"], "Products": row["Products"]})
-                self.tree.insert("", "end", values=(
-                    row["BillNo"], row["CustomerName"], row["CustomerPhone"], row["TotalPrice"], row["DiscountedPrice"],
-                    row["DateTime"]))
-
+# Main program
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = PlaceOrderInterface(root)
+    root.mainloop()

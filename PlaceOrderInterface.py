@@ -9,7 +9,7 @@ from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
 
 import CompanyOrders
-from Database import company, companyorders
+from Database import company, companyorders, warehouses
 
 
 class PlaceOrderInterface:
@@ -64,6 +64,20 @@ class PlaceOrderInterface:
         self.company_dropdown.pack()
         self.company_dropdown.set("Select Company")
 
+        # Dropdown menu for selecting a warehouse
+        self.warehouse_label = tk.Label(content_frame, text="Select Warehouse:", font=("Arial", 12), bg="#968802",
+                                        fg="white")
+        self.warehouse_label.pack(pady=10)
+
+        # Fetch warehouse names from the database
+        warehouse_names = [wh["warehouseName"] for wh in warehouses.find()]
+
+        self.selected_warehouse = tk.StringVar()
+        self.warehouse_dropdown = ttk.Combobox(content_frame, textvariable=self.selected_warehouse,
+                                               values=warehouse_names, font=("Arial", 12))
+        self.warehouse_dropdown.pack()
+        self.warehouse_dropdown.set("Select Warehouse")
+
         # Entries for entering product details
         self.product_name_label = tk.Label(content_frame, text="Enter Product Name:", font=("Arial", 12), bg="#968802",
                                            fg="white")
@@ -110,22 +124,25 @@ class PlaceOrderInterface:
 
     def place_order(self):
         selected_company = self.selected_company.get()
+        selected_warehouse = self.selected_warehouse.get()
 
-        if selected_company == "Select Company" or not self.product_list:
-            messagebox.showerror("Error", "Please select a company and add products.")
+        if selected_company == "Select Company" or selected_warehouse == "Select Warehouse" or not self.product_list:
+            messagebox.showerror("Error", "Please select a company, warehouse, and add products.")
             return
 
         # Convert date to datetime object for compatibility with MongoDB
         order_date_pakistan = datetime.now()
 
         order_data = {"company_name": selected_company, "products": self.product_list,
-                      "order_date": order_date_pakistan}
+                      "order_date": order_date_pakistan, "warehouse_name": selected_warehouse}
 
         self.orders_collection.insert_one(order_data)
 
         # Send an email to the company
         company_info = self.company_collection.find_one({"CName": selected_company})
-        if company_info and "cEmail" in company_info:
+        warehouse_info = warehouses.find_one({"warehouseName": selected_warehouse})
+
+        if company_info and "cEmail" in company_info and warehouse_info:
             company_email = company_info["cEmail"]
             sender_email = "musmanrajputt490@gmail.com"
             sender_password = "iuox lzmd wzlr awrb"  # Replace with your email password
@@ -135,13 +152,18 @@ class PlaceOrderInterface:
                 f"Dear Manager of {selected_company},\n\nA new order has been placed on {order_date_pakistan} from Agrifarm."
                 f"\n\nDetails:\n\n")
 
-            # Format product details in a table
             body += "<table border='1'><tr><th>Product Name</th><th>Quantity</th></tr>"
             for product in self.product_list:
                 body += f"<tr><td>{product['product_name']}</td><td>{product['quantity']}</td></tr>"
             body += "</table>"
 
-            body += (f'\n\nBest Regards,\n\n'
+            body += (f"\n\nWarehouse Details:\n\n"
+                     f"Warehouse: {selected_warehouse}\n"
+                     f"Location: {warehouse_info.get('location', '')}\n"
+                     f"Contact: {warehouse_info.get('contact', {}).get('manager', '')}, "
+                     f"{warehouse_info.get('contact', {}).get('phone', '')}, "
+                     f"{warehouse_info.get('contact', {}).get('email', '')}\n\n"
+                     f'Best Regards,\n\n'
                      f'Muhammad Usman\n\n'
                      f'Manager of Agrifarm\n\n'
                      f'Contact: +92 123 456789\n\n'
@@ -162,7 +184,8 @@ class PlaceOrderInterface:
 
             messagebox.showinfo("Success", "Order placed successfully! Email sent to the company.")
         else:
-            messagebox.showwarning("Warning", "Company email not found. Order placed successfully, but email not sent.")
+            messagebox.showwarning("Warning",
+                                   "Company email or warehouse details not found. Order placed successfully, but email not sent.")
 
         # Clear the product list
         self.product_list = []

@@ -1,9 +1,11 @@
 import tkinter as tk
+from datetime import datetime
 from tkinter import ttk, SOLID
 
 from PIL import Image, ImageTk
 
 import CompanyOrders
+# Replace these imports with your actual module imports
 from Database import companyorders
 
 
@@ -42,50 +44,79 @@ class CompanyOrdersInterface:
         self.company_label.pack()
 
         # Treeview to display orders with vertical scrollbar
-        self.tree = ttk.Treeview(self.content_frame, columns=("Company", "Products", "Order Date", "Order Time"),
+        self.tree = ttk.Treeview(self.content_frame, columns=("Company", "Warehouse", "Order Date and Time"),
                                  show="headings")
         self.tree.heading("Company", text="Company")
-        self.tree.heading("Products", text="Products")
-        self.tree.heading("Order Date", text="Order Date")
-        self.tree.heading("Order Time", text="Order Time")
+        self.tree.heading("Warehouse", text="Warehouse")
+        self.tree.heading("Order Date and Time", text="Order Date and Time")
 
-        # Vertical scrollbar
-        scrollbar = ttk.Scrollbar(self.content_frame, orient="vertical", command=self.tree.yview)
-        scrollbar.pack(side="right", fill="y")
-        self.tree.configure(yscrollcommand=scrollbar.set)
+        self.tree.pack(expand=True, fill="both")
 
-        self.tree.pack(expand=True, fill="both")  # Expand and fill the available space
+        self.show_products_button = tk.Button(self.content_frame, text="Show Products", command=self.show_products,
+                                              font=("Arial", 12, "bold"), bg="#487307", fg="white", width=20, height=3)
+        self.show_products_button.pack(pady=10)
 
         # Fetch and display orders
         self.display_orders()
 
     def display_orders(self):
-        # Fetch orders from the database
         orders_cursor = companyorders.find()
         orders = list(orders_cursor)
 
-        # Clear existing items in the treeview
         for item in self.tree.get_children():
             self.tree.delete(item)
 
-        # Insert orders into the treeview
         for order in orders:
             company_name = order["company_name"]
-            order_date = order["order_date"].strftime("%Y-%m-%d")
-            order_time = order["order_date"].strftime("%H:%M:%S")
+            order_date = order["order_date"]
+            warehouse = order["warehouse_name"]
 
-            # Insert each product as a separate row
-            for product in order["products"]:
+            values = (company_name, warehouse, order_date)
+
+            self.tree.insert("", "end", values=values, tags=("order_tag",))
+
+    def show_products(self):
+        self.window.attributes('-topmost', False)
+        # Get the selected item in the treeview
+        selected_item = self.tree.focus()
+        if selected_item:
+            order_details = self.tree.item(selected_item, "values")
+            company_name, warehouse_name, order_date_str = order_details
+
+            # Convert order_date_str to a datetime object
+            order_date = datetime.strptime(order_date_str, "%Y-%m-%d %H:%M:%S.%f")
+
+            selected_order = companyorders.find_one(
+                {"company_name": company_name, "order_date": order_date, "warehouse_name": warehouse_name})
+
+            # Open a new window to display product details
+            product_details_window = tk.Toplevel(self.window)
+            product_details_window.title("Product Details")
+
+            # Create and configure a treeview for product details
+            product_tree = ttk.Treeview(product_details_window, columns=("Product Name", "Quantity"), show="headings", )
+            product_tree.heading("Product Name", text="Product Name")
+            product_tree.heading("Quantity", text="Quantity")
+
+            # Insert product details into the treeview
+            for product in selected_order["products"]:
                 product_name = product["product_name"]
                 quantity = product["quantity"]
+                product_tree.insert("", "end", values=(product_name, quantity))
 
-                values = (company_name, product_name, quantity, order_date, order_time)
+            # Pack the treeview and configure for visibility
+            product_tree.pack(expand=True, fill="both")
+            product_tree.tag_configure("merged", font=("Arial", 12, "bold"), background="#f0f0f0")
 
-                # Insert values for each order
-                self.tree.insert("", "end", values=values)
+            # Add "OK" button to close the product details window
+            ok_button = tk.Button(product_details_window, text="OK",
+                                  command=lambda: self.destory(product_details_window), font=("Arial", 12, "bold"),
+                                  bg="#487307", fg="white", width=10, )
+            ok_button.pack(pady=10)
 
-        # Configure the "merged" tag to span multiple columns
-        self.tree.tag_configure("merged", font=("Arial", 12, "bold"), background="#f0f0f0")
+    def destory(self, product_details_window):
+        self.window.attributes('-topmost', True)
+        product_details_window.destroy()
 
     def menu_interface(self):
         CompanyOrders.CompanyOrders(self.window)
