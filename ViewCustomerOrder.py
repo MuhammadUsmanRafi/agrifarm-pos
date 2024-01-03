@@ -154,12 +154,3 @@ class ViewCustomerOrder:
     def menu_interface(self):
         ViewCustomerModuleInterface.ViewCustomerModulesInterface(self.window, 0)
 
-
-if __name__ == "__main__":
-    # Provide sample name and email for testing
-    customer_name = "Usman Rafi"
-    customer_email = "musmanrajputt490@gmail.com"
-
-    root = tk.Tk()
-    app = ViewCustomerOrder(root, customer_name, customer_email)
-    root.mainloop()
