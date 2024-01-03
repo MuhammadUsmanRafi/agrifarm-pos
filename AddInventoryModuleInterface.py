@@ -185,5 +185,3 @@ class AddInventoryModulesInterface:
 
     def menu_interface(self):
         InventoryManagementInterface.InventoryManagementInterface(self.window)
-
-

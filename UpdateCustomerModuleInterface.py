@@ -7,13 +7,12 @@ from PIL import Image, ImageTk
 from pymongo import errors
 
 import ViewCustomerModuleInterface
-
 from Database import customer
 
 
 class UpdateCustomerInterface:
     def __init__(self, window, customer_name, customer_email, customer_address, image):
-        self.image = Image
+        self.image = image
         self.image_path = None
         self.window = window
         self.window.title(customer_name)
@@ -48,7 +47,7 @@ class UpdateCustomerInterface:
         self.add_customer_frame.configure(padx=20, pady=20, borderwidth=2, relief=SOLID)
 
         # Customer Image
-        decoded_image_data = base64.b64decode(Image)
+        decoded_image_data = base64.b64decode(self.image)
         self.customer_image = Image.open(BytesIO(decoded_image_data))
         self.customer_image = self.customer_image.resize((200, 200))
         self.customer_image = ImageTk.PhotoImage(self.customer_image)
@@ -57,8 +56,8 @@ class UpdateCustomerInterface:
         self.customer_image_label.grid(row=0, column=0, rowspan=5, padx=(0, 20))
 
         # Upload Image Button
-        self.upload_image_button = Button(self.add_customer_frame, text="Change Image", font=("Arial", 12), bg="#487307",
-                                          fg="white", width=15, command=self.upload_image)
+        self.upload_image_button = Button(self.add_customer_frame, text="Change Image", font=("Arial", 12),
+                                          bg="#487307", fg="white", width=15, command=self.upload_image)
         self.upload_image_button.grid(row=5, column=0, padx=(0, 20))
 
         # Title Label
