@@ -10,4 +10,5 @@ company = database.Companies
 companyorders = database.companyorders
 productsales = database.productsales
 warehouses = database.warehouses
+customer = database.customers
 

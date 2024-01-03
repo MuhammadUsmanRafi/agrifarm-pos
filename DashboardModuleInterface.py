@@ -33,7 +33,7 @@ class DashboardModuleInterface:
                                   highlightthickness=0)
         self.upper_button.configure(padx=20, pady=20, borderwidth=2, relief=SOLID)
 
-        self.button_labels = ["View Companies", "Add Company", "Delete Company", "Place Order"]
+        self.button_labels = ["View Companies", "Add ", "Delete Company", "Place Order"]
         self.module_label = Label(self.window, text=self.button_labels[num], font=("Arial", 30, "bold"),
                                   background="#968802", foreground="white")
         self.module_label.place(x=self.window.winfo_screenwidth() / 4 * 2.3, y=20)

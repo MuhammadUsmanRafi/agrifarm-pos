@@ -187,7 +187,3 @@ class AddInventoryModulesInterface:
         InventoryManagementInterface.InventoryManagementInterface(self.window)
 
 
-if __name__ == "__main__":
-    root = Tk()
-    add_product_interface = AddInventoryModulesInterface(root, 1)
-    root.mainloop()

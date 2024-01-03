@@ -3,7 +3,7 @@ from tkinter import *
 from PIL import Image, ImageTk
 
 import MenuInterface
-import ViewCustomerModuleInterface
+import ViewCustomerModuleInterface, AddCustomer
 
 
 class CustomerInterface:
@@ -38,7 +38,7 @@ class CustomerInterface:
         self.upper_button.configure(padx=20, pady=20, borderwidth=2, relief=SOLID)
 
         # Create a list of button labels
-        button_labels = ["Recent Customer"]
+        button_labels = ["View Customer"]
 
         # Create and pack buttons with adjusted width and height
         for label in button_labels:
@@ -54,7 +54,7 @@ class CustomerInterface:
         self.middle_button.configure(padx=20, pady=20, borderwidth=2, relief=SOLID)
 
         # Create a list of button labels
-        button_labels = ["Favourite Customer"]
+        button_labels = ["Add Customer"]
 
         # Create and pack buttons with adjusted width and height
         for label in button_labels:
@@ -70,7 +70,7 @@ class CustomerInterface:
         self.lower_button.configure(padx=20, pady=20, borderwidth=2, relief=SOLID)
 
         # Create a list of button labels
-        button_labels = ["Edit Customer"]
+        button_labels = ["Recent Customer"]
 
         # Create and pack buttons with adjusted width and height
         for label in button_labels:
@@ -82,7 +82,7 @@ class CustomerInterface:
 
         self.end_button = Frame(self.customer_frame, bg="#968802", highlightbackground="#968802", highlightthickness=0)
         self.end_button.configure(padx=20, pady=20, borderwidth=2, relief=SOLID)
-        button_labels = ["Delete Customer"]
+        button_labels = ["Remove Customer"]
         for label in button_labels:
             button = Button(self.end_button, text=label, font=("Arial", 12, "bold"), bg="#487307", fg="white", width=25,
                             height=3)
@@ -90,21 +90,21 @@ class CustomerInterface:
             self.modules_button.append(button)
         self.end_button.pack()
 
-        self.modules_button[0].config(command=self.recent_customer)
-        self.modules_button[1].config(command=self.favourite_customer)
-        self.modules_button[2].config(command=self.edit_customer)
-        self.modules_button[3].config(command=self.delete_customer)
+        self.modules_button[0].config(command=self.view_customer)
+        self.modules_button[1].config(command=self.add_customer)
+        self.modules_button[2].config(command=self.recent_customer)
+        self.modules_button[3].config(command=self.remove_customer)
 
-    def recent_customer(self):
+    def view_customer(self):
         ViewCustomerModuleInterface.ViewCustomerModulesInterface(self.window, 0)
 
-    def favourite_customer(self):
-        ViewCustomerModuleInterface.ViewCustomerModulesInterface(self.window, 1)
+    def add_customer(self):
+        AddCustomer.AddCustomer(self.window, 1)
 
-    def edit_customer(self):
+    def recent_customer(self):
         ViewCustomerModuleInterface.ViewCustomerModulesInterface(self.window, 2)
 
-    def delete_customer(self):
+    def remove_customer(self):
         ViewCustomerModuleInterface.ViewCustomerModulesInterface(self.window, 3)
 
     def menu_interface(self):

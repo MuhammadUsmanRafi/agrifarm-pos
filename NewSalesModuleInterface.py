@@ -11,7 +11,6 @@ from PIL import Image, ImageTk
 import SalesInterface
 from Database import product, productsales
 
-
 class NewSalesModuleInterface:
     def __init__(self, window):
         self.discount_check = False
