@@ -7,6 +7,7 @@ from PIL import Image, ImageTk
 from pymongo import errors
 
 import ViewCustomerModuleInterface
+import ViewCustomerOrder
 from Database import customer
 
 
@@ -58,7 +59,7 @@ class UpdateCustomerInterface:
         # Upload Image Button
         self.upload_image_button = Button(self.add_customer_frame, text="Change Image", font=("Arial", 12),
                                           bg="#487307", fg="white", width=15, command=self.upload_image)
-        self.upload_image_button.grid(row=5, column=0, padx=(0, 20))
+        self.upload_image_button.grid(row=6, column=0, padx=(0, 20))
 
         # Title Label
         self.title_label = Label(self.add_customer_frame, text=customer_name, font=("Arial", 30, "bold"), bg="#968802",
@@ -84,10 +85,16 @@ class UpdateCustomerInterface:
         self.customer_address_entry.grid(row=2, column=2, pady=(5, 5))
         self.customer_address_entry.insert(0, customer_address)
 
+        self.view_orders_button = Button(self.add_customer_frame, text="View Order", font=("Arial", 12, "bold"),
+                                         bg="#487307", fg="white", width=25, height=2,
+                                         command=lambda name=customer_name, email=customer_email: self.view_order(name,
+                                                                                                                  email))
+        self.view_orders_button.grid(row=3, column=1, columnspan=2, pady=(0, 20))
+
         # Update Customer Button
         self.add_button = Button(self.add_customer_frame, text=f"Update {customer_name}", font=("Arial", 12, "bold"),
                                  bg="#487307", fg="white", width=25, height=2, command=self.update_customer)
-        self.add_button.grid(row=3, column=1, columnspan=2, pady=(0, 20))
+        self.add_button.grid(row=4, column=1, columnspan=2, pady=(0, 10))
 
     def upload_image(self):
         file_path = filedialog.askopenfilename(title="Select an Image",
@@ -96,6 +103,9 @@ class UpdateCustomerInterface:
 
     def menu_interface(self):
         ViewCustomerModuleInterface.ViewCustomerModulesInterface(self.window, 0)
+
+    def view_order(self, name, email):
+        ViewCustomerOrder.ViewCustomerOrder(self.window, name, email)
 
     def update_customer(self):
         customer_name = self.title_label.cget("text")

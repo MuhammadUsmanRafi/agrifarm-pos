@@ -9,7 +9,8 @@ import qrcode
 from PIL import Image, ImageTk
 
 import SalesInterface
-from Database import product, productsales
+from Database import product, productsales, customer
+
 
 class NewSalesModuleInterface:
     def __init__(self, window):
@@ -227,7 +228,6 @@ class NewSalesModuleInterface:
         self.populate_product_treeview()
 
     def populate_product_treeview(self):
-        # Clear existing items in the Treeview
         for item in self.tree.get_children():
             self.tree.delete(item)
 
@@ -434,7 +434,7 @@ class NewSalesModuleInterface:
         customer_phone = self.customer_phone_entry.get()
         current_time = time.strftime("%Y-%m-%d %H:%M:%S")
 
-        # Prepare data for insertion or update in productsales database
+        # Prepare sales data
         sales_data = {"BillNo": bill_no, "CustomerName": customer_name, "CustomerPhone": customer_phone,
                       "TotalPrice": self.total_price, "DiscountedPrice": self.total_price - self.discount_bill,
                       "DateTime": current_time, "Products": self.cart_items}
@@ -443,7 +443,6 @@ class NewSalesModuleInterface:
         qr_code_base64 = self.generate_qr_code_base64(sales_data)
         sales_data["QRCodeBase64"] = qr_code_base64
 
-        # 2. Update selected product quantity in the database
         for item in self.cart_items:
             product_name = item["Product Name"]
             selected_product = self.product_collection.find_one({"ProductName": product_name})
@@ -456,8 +455,9 @@ class NewSalesModuleInterface:
 
         # Check if the bill_no already exists in the database
         existing_bill = productsales.find_one({"BillNo": bill_no})
+
         if existing_bill:
-            # Update the existing document
+            # Update the existing bill
             productsales.update_one({"BillNo": bill_no}, {"$set": sales_data})
             messagebox.showinfo("Update Successful", "Bill updated successfully.")
         else:
@@ -465,7 +465,20 @@ class NewSalesModuleInterface:
             productsales.insert_one(sales_data)
             messagebox.showinfo("Insert Successful", "New bill inserted successfully.")
 
-        # Clear fields and reset the UI
+        # Insert or update the bill number in the customer's orders list
+        customer_data = {"$addToSet": {"Orders": bill_no}}
+
+        # Check if the customer already exists
+        existing_customer = customer.find_one({"CustomerName": customer_name, "CustomerEmail": customer_phone})
+
+        if existing_customer:
+            # Update the existing customer
+            customer.update_one({"CustomerName": customer_name}, customer_data)
+        else:
+            # Insert a new customer with the bill number in the orders list
+            customer.insert_one({"CustomerName": customer_name, "CustomerEmail": customer_phone, "Orders": [bill_no]})
+
+        # Clear fields and update UI
         self.clear_field()
 
     def clear_field(self):
