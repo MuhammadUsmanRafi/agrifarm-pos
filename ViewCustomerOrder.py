@@ -116,8 +116,7 @@ class ViewCustomerOrder:
 
         # OK button to close the details window
         ok_button = Button(details_window, text="OK", command=lambda: self.destory(details_window), font=("Arial", 12),
-                           bg="#487307",
-                           fg="white", width=15)
+                           bg="#487307", fg="white", width=15)
         ok_button.pack(side=BOTTOM, pady=10, padx=10)
 
     def destory(self, details_window):
@@ -152,4 +151,3 @@ class ViewCustomerOrder:
 
     def menu_interface(self):
         ViewCustomerModuleInterface.ViewCustomerModulesInterface(self.window, 0)
-

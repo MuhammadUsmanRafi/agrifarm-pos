@@ -1,12 +1,25 @@
 import base64
+import os
+import subprocess
 import time
 from io import BytesIO
 from tkinter import *
 from tkinter import messagebox
 from tkinter import ttk
 
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+
+try:
+    pdfmetrics.registerFont(TTFont('Arial', 'Arial.ttf'))
+except Exception as e:
+    print(f"Error registering 'Arial' font: {e}")
+    pdfmetrics.registerFont(TTFont('Helvetica', 'Helvetica.ttf'))
+
 import qrcode
 from PIL import Image, ImageTk
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 
 import SalesInterface
 from Database import product, productsales, customer
@@ -24,21 +37,16 @@ class NewSalesModuleInterface:
         self.window.title("Sales")
         self.window.geometry(f"{window.winfo_screenwidth()}x{window.winfo_screenheight()}")
         self.window.iconbitmap("icon.ico")
-
-        # Set background image for the login window
         background_image_path = "assets/new_sales.png"
         self.background_image = Image.open(background_image_path)
         self.background_image = self.background_image.resize(
             (self.window.winfo_screenwidth(), self.window.winfo_screenheight()))
         self.background_image = ImageTk.PhotoImage(self.background_image)
-
         self.label = Label(self.window, image=self.background_image)
         self.label.place(x=0, y=0)
-
         self.back_to_home_button = Button(self.window, text="Back", command=self.menu_interface, font=("Arial", 12),
                                           bg="#487307", fg="white", width=15)
         self.back_to_home_button.place(x=10, y=10)
-
         label = Label(self.window, text="New Sales Billing System", font=("Arial", 40, "bold"), foreground="white",
                       bg="#968802")
         label.place(x=self.window.winfo_screenwidth() / 3.7, y=30)
@@ -202,7 +210,6 @@ class NewSalesModuleInterface:
         self.search_entry.focus_set()
         self.search_entry.bind("<KeyRelease>", lambda event: self.filter_products(event))
 
-        # Create Treeview to display product details
         self.tree = ttk.Treeview(self.select_product_window,
                                  columns=("ProductName", "ProductCompany", "ProductBrand", "QuantityInStock"))
         self.tree.heading("#0", text="Select")
@@ -231,26 +238,19 @@ class NewSalesModuleInterface:
         for item in self.tree.get_children():
             self.tree.delete(item)
 
-        # Fetch products from MongoDB
         products = self.product_collection.find()
 
-        # Insert products into the Treeview
         for pd in products:
             self.tree.insert("", "end", values=(
                 pd["ProductName"], pd["ProductCompany"], pd["ProductBrand"], pd["QuantityInStock"]))
 
     def filter_products(self, event):
-        # Implement product filtering based on the search_entry value
         search_text = self.search_entry.get().lower()
 
         # Clear existing items in the Treeview
         for item in self.tree.get_children():
             self.tree.delete(item)
-
-        # Fetch products from MongoDB
         products = self.product_collection.find()
-
-        # Insert products into the Treeview based on the search text
         for pd in products:
             product_name = pd["ProductName"]
             if not search_text or search_text in str(product_name).lower():
@@ -262,10 +262,8 @@ class NewSalesModuleInterface:
         if selected_item:
             productname = self.tree.item(selected_item, "values")[0]
 
-            # Convert the string representation of ObjectId back to ObjectId
             selected_product = self.product_collection.find_one({"ProductName": productname})
 
-            # Extract product details and set them in the main window
             product_name = selected_product["ProductName"]
             product_company = selected_product["ProductCompany"]
             product_brand = selected_product["ProductBrand"]
@@ -283,51 +281,35 @@ class NewSalesModuleInterface:
         product_name = self.product_name_entry.get()
         entered_quantity = self.quantity_entry.get()
 
-        # Check if the entered quantity is a valid positive integer
         if not entered_quantity.isdigit() or int(entered_quantity) <= 0:
             messagebox.showinfo("Invalid Quantity", "Please enter a valid positive quantity.")
             return
-
-        # Convert entered quantity to an integer
         quantity = int(entered_quantity)
 
-        # Check if the product exists in the database
         selected_product = self.product_collection.find_one({"ProductName": product_name})
 
         if selected_product:
-            # Extract product details from the database
             quantity_in_stock = selected_product["QuantityInStock"]
             price_in_stock = selected_product["ProductPrice"]
-
-            # Check if the entered quantity is less than or equal to the quantity in stock
             if quantity <= quantity_in_stock:
-                # Check if the product is already in the cart
                 existing_cart_item = next((item for item in self.cart_items if item["Product Name"] == product_name),
                                           None)
 
                 if existing_cart_item:
-                    # Update the quantity of the existing item
                     self.total_price -= existing_cart_item["t_Price"]
                     existing_cart_item["Quantity"] = quantity
                     existing_cart_item["t_Price"] = price_in_stock * existing_cart_item["Quantity"]
                     self.total_price += existing_cart_item["t_Price"]
                 else:
-                    # Use the actual price from the database instead of dummy data
                     price = price_in_stock
                     t_price = price_in_stock * quantity
                     self.total_price += t_price
 
-                    # Create a dictionary for the cart item
                     cart_item = {"Product Name": product_name, "Quantity": quantity, "Unit Price": price,
                                  "t_Price": t_price}
 
-                    # Add the cart item to the list
                     self.cart_items.append(cart_item)
-
-                # Update the bill area
                 self.update_bill_area()
-
-                # Clear the entry fields
                 self.clear()
             else:
                 messagebox.showinfo("Insufficient Stock",
@@ -336,42 +318,25 @@ class NewSalesModuleInterface:
     def update_cart(self):
         selected_item = self.cart_tree.selection()
         if selected_item:
-            # Get the selected item index
             item_index = int(selected_item[0][1:]) - 1
-
-            # Get the selected cart item
             selected_cart_item = self.cart_items[item_index]
-
-            # Set the product name and quantity in the entry fields
             self.product_name_entry.delete(0, END)
             self.product_name_entry.insert(0, selected_cart_item["Product Name"])
             self.quantity_entry.delete(0, END)
             self.quantity_entry.insert(0, selected_cart_item["Quantity"])
-
-            # Update the bill area
             self.update_bill_area()
 
     def delete_cart(self):
         selected_item = self.cart_tree.selection()
         if selected_item:
-            # Get the selected item index
             item_index = int(selected_item[0][1:]) - 1
-
-            # Subtract the t_Price of the selected item from the total_price
             self.total_price -= self.cart_items[item_index]["t_Price"]
-
-            # Remove the selected item from the cart_items list
             del self.cart_items[item_index]
-
-            # Update the bill area
             self.update_bill_area()
 
     def update_bill_area(self):
-        # Clear existing items in the Treeview and buttons
         for item in self.bill_area.winfo_children():
             item.destroy()
-
-        # Create Treeview to display cart details
         self.cart_tree = ttk.Treeview(self.bill_area, columns=("Product Name", "Quantity", "Unit Price", "t_Price"),
                                       height=14)
         self.cart_tree.heading("Product Name", text="Product Name")
@@ -402,8 +367,6 @@ class NewSalesModuleInterface:
 
         total_bill = Label(self.bill_area, text=f"{self.total_price}", font=("Arial", 12, "bold"), bg="white")
         total_bill.grid(row=2, column=1, padx=6, pady=2, sticky="nsew")
-
-        # Buttons for updating or deleting selected row in the cart
         update_button = Button(self.bill_area, text="Update", command=self.update_cart, font=("Arial", 12, "bold"),
                                bg="#487307", fg="white", width=12, height=2)
         update_button.grid(row=3, column=0, padx=6, pady=2, sticky="nsew")
@@ -461,25 +424,85 @@ class NewSalesModuleInterface:
             productsales.update_one({"BillNo": bill_no}, {"$set": sales_data})
             messagebox.showinfo("Update Successful", "Bill updated successfully.")
         else:
-            # Insert a new document
             productsales.insert_one(sales_data)
             messagebox.showinfo("Insert Successful", "New bill inserted successfully.")
 
-        # Insert or update the bill number in the customer's orders list
         customer_data = {"$addToSet": {"Orders": bill_no}}
 
-        # Check if the customer already exists
         existing_customer = customer.find_one({"CustomerName": customer_name, "CustomerEmail": customer_phone})
 
         if existing_customer:
-            # Update the existing customer
             customer.update_one({"CustomerName": customer_name}, customer_data)
         else:
-            # Insert a new customer with the bill number in the orders list
             customer.insert_one({"CustomerName": customer_name, "CustomerEmail": customer_phone, "Orders": [bill_no]})
 
-        # Clear fields and update UI
         self.clear_field()
+
+        self.generate_receipt_pdf(bill_no, customer_name, customer_phone, current_time, self.cart_items,
+                                  self.total_price, self.discount_bill)
+
+    def generate_receipt_pdf(self, bill_no, customer_name, customer_phone, current_time, cart_items, total_price,
+                             discount_bill):
+        font_path = "Arial"
+        if not os.path.exists("receipts"):
+            os.makedirs("receipts")
+
+        # Generate PDF receipt
+        pdf_filename = f"receipts/receipt_{bill_no}.pdf"
+        c = canvas.Canvas(pdf_filename, pagesize=letter)
+
+        # Set stroke color to white to hide grid lines
+        c.setStrokeColorRGB(1, 1, 1)
+
+        c.setFont(font_path, 20)
+        c.drawCentredString(letter[0] / 2, 800, "Agrifarm")
+
+        logo_path = "E:\\PYTHON_HOME\\Project_Alpha\\agrifarm-pos\\icon.png"
+        c.drawInlineImage(logo_path, 50, 700, width=60, height=60)
+
+        # 3. Add a table for bill details in the upper right corner
+        bill_details_table = [["Bill No:", str(bill_no)], ["Date:", current_time.split()[0]],
+                              ["Time:", current_time.split()[1]]]
+        c.setFont(font_path, 15)
+        self.draw_table(c, bill_details_table, x=450, y=730, col_width=60, row_height=15)
+
+        # 4. Add details of the organization below the logo
+        organization_details = ["AGRIFARM", "Address Line 1", "Address Line 2", "City, State, Zip",
+                                "Phone: xxx-xxx-xxxx", "Email: info@example.com"]
+        c.setFont(font_path, 15)
+        self.draw_text(c, organization_details, x=120, y=750)
+
+        # 5. Add customer information at the upper left middle
+        customer_details = [f"Customer: {customer_name}", f"Phone: {customer_phone}"]
+        c.setFont("Arial", 15)
+        self.draw_text(c, customer_details, x=50, y=580)
+
+        # 6. Add product details table at the center
+        product_details_table = [["Product Name", "Quantity", "Unit Price", "Price"]]
+        for item in cart_items:
+            product_details_table.append(
+                [item['Product Name'], str(item['Quantity']), f"${item['Unit Price']}", f"${item['t_Price']}"])
+
+        c.setStrokeColorRGB(0, 0, 0)
+        c.setFont(font_path, 15)
+        self.draw_table(c, product_details_table, x=50, y=500, col_width=130, row_height=20)
+
+        total_details = [f"Total Price: ${total_price}", f"Discount: ${discount_bill}",
+                         f"Discounted Price: ${total_price - discount_bill}"]
+        c.setFont(font_path, 15)
+        self.draw_text(c, total_details, x=400, y=50)
+
+        c.save()
+        subprocess.Popen(['start', '', pdf_filename], shell=True)
+
+    def draw_table(self, pdf_canvas, data, x, y, col_width, row_height):
+        for i, row in enumerate(data):
+            for j, text in enumerate(row):
+                pdf_canvas.drawString(x + j * col_width, y - i * row_height, str(text))
+
+    def draw_text(self, pdf_canvas, data, x, y):
+        for i, text in enumerate(data):
+            pdf_canvas.drawString(x, y - i * 20, str(text))
 
     def clear_field(self):
         NewSalesModuleInterface(self.window)
@@ -551,32 +574,25 @@ class NewSalesModuleInterface:
         self.window.after(1000, self.update_time)
 
     def search_bill(self):
-        # Retrieve the bill number entered by the user
         bill_no = int(self.bill_no_entry.get())
 
-        # Query the database to check if the bill exists
         existing_bill = productsales.find_one({"BillNo": bill_no})
 
         if existing_bill:
-            # Retrieve data from the existing bill
             customer_name = existing_bill["CustomerName"]
             customer_phone = existing_bill["CustomerPhone"]
             selected_products = existing_bill["Products"]
 
-            # Update UI with the retrieved data
             self.customer_name_entry.delete(0, END)
             self.customer_name_entry.insert(0, customer_name)
             self.customer_phone_entry.delete(0, END)
             self.customer_phone_entry.insert(0, customer_phone)
 
-            # Add products from the existing bill to the cart
             self.cart_items = selected_products
             self.total_price = existing_bill["TotalPrice"]
 
-            # Update the bill area
             self.update_bill_area()
 
-            # Show QR code
             self.show_qr_code()
 
             messagebox.showinfo("Bill Found", f"Bill {bill_no} found and loaded.")

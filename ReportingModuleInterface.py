@@ -5,7 +5,6 @@ from PIL import Image, ImageTk
 import MenuInterface
 import ReportingAnalyticsInterface
 
-
 class ReportingModuleInterface:
     def __init__(self, window, num):
         self.window = window
@@ -22,8 +21,8 @@ class ReportingModuleInterface:
         self.label = Label(self.window, image=self.background_image)
         self.label.place(x=0, y=0)
 
-        self.back_to_home_button = Button(self.window, text="Back", command=self.menu_interface,
-                                          font=("Arial", 12), bg="#487307", fg="white", width=15)
+        self.back_to_home_button = Button(self.window, text="Back", command=self.menu_interface, font=("Arial", 12),
+                                          bg="#487307", fg="white", width=15)
         self.back_to_home_button.place(x=10, y=10)  # Adjust the position
 
         self.analytics_frame = Frame(self.window, bg="#968802", highlightbackground="#968802", highlightthickness=0)
