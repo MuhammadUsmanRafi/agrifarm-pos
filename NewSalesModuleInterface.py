@@ -457,7 +457,9 @@ class NewSalesModuleInterface:
         c.setFont(font_path, 20)
         c.drawCentredString(letter[0] / 2, 800, "Agrifarm")
 
-        logo_path = "E:\\PYTHON_HOME\\Project_Alpha\\agrifarm-pos\\icon.png"
+        logo_path = "icon.png"
+
+
         c.drawInlineImage(logo_path, 50, 700, width=60, height=60)
 
         # 3. Add a table for bill details in the upper right corner
